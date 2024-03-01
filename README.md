@@ -27,3 +27,10 @@ Under the hood it uses IRC, though it makes no difference from a user point of v
 - Make links clickable
 - Implement thumbs for pictures?
 - Implement spoiler tag
+- autoscroll
+- Let user choose nickname (vs username)
+- Don't correlate unique suffix and color, use pre-determined colors which work well, based on who is read in which order (i.e. people will have different colors on different client instances, but that's ok)
+- Put lines closer to one-another
+- Sup in nickname makes things harder to read
+- wordwrap
+- support /me command
