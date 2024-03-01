@@ -144,7 +144,9 @@ class IRCApp(Gtk.Application):
         message = re.sub(r'\x1D(.*?)\x1D', r'<i>\1</i>', message)
         message = re.sub(r'\x1F(.*?)\x1F', r'<u>\1</u>', message)
         message = re.sub(r'\x1E(.*?)\x1E', r'<s>\1</s>', message)
-        self.store.append([get_markup_from_nick(nick), message])
+        iter = self.store.append([get_markup_from_nick(nick), message])
+        path = self.store.get_path(iter)
+        self.treeview.scroll_to_cell(path, None, False, 0.0, 0.0)
 
     @_async
     def connect(self):
