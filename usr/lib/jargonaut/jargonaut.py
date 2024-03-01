@@ -131,10 +131,11 @@ class IRCApp(Gtk.Application):
     @_async
     def send_message(self, widget):
         entry = self.builder.get_object("entry_main")
-        message = entry.get_text()
-        entry.set_text("")
-        self.client.connection.privmsg("#minttest", message)
-        self.print_message(self.nickname, message)
+        message = entry.get_text().strip()
+        if message != "":
+            entry.set_text("")
+            self.client.connection.privmsg("#minttest", message)
+            self.print_message(self.nickname, message)
 
     @idle
     def print_message(self, nick, message):
@@ -143,7 +144,6 @@ class IRCApp(Gtk.Application):
         message = re.sub(r'\x1D(.*?)\x1D', r'<i>\1</i>', message)
         message = re.sub(r'\x1F(.*?)\x1F', r'<u>\1</u>', message)
         message = re.sub(r'\x1E(.*?)\x1E', r'<s>\1</s>', message)
-        line = f"{nick}: {message}\n"
         self.store.append([get_markup_from_nick(nick), message])
 
     @_async
