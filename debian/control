@@ -1,0 +1,20 @@
+Source: jargonaut
+Section: x11
+Priority: optional
+Maintainer: Linux Mint <root@linuxmint.com>
+Build-Depends:
+    debhelper (>= 9),
+    dh-python
+Standards-Version: 3.9.5
+
+Package: jargonaut
+Architecture: all
+Depends:
+    gir1.2-glib-2.0,
+    gir1.2-gtk-3.0 (>= 3.22.0),
+    gir1.2-xapp-1.0 (>= 2.2.0),
+    python3-irc,
+    ${misc:Depends},
+    ${python3:Depends}
+Description: Chat Room application
+ An easy to use chat room application.

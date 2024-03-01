@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<schemalist>
+
+  <schema path="/org/x/jargonaut/" id="org.x.jargonaut">
+
+    <key name='server' type='s'>
+      <default>'irc.freenode.org'</default>
+      <summary></summary>
+      <description></description>
+    </key>
+
+  </schema>
+
+</schemalist>

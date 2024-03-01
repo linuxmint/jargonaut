@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Chat Room
+Comment=A place for users to help each others
+Exec=jargonaut
+Icon=jargonaut
+Terminal=false
+Type=Application
+Encoding=UTF-8
+Categories=Application;Utility;
+StartupNotify=false
