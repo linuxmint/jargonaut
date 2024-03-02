@@ -53,15 +53,25 @@ class IRCClient(irc.client.SimpleIRCClient):
     def __init__(self, ui):
         irc.client.SimpleIRCClient.__init__(self)
         self.app = app
+        self.channel_users = {}
 
     def on_welcome(self, connection, event):
         connection.join("#minttest")
+        connection.names(["#minttest"])
 
     @idle
     def on_join(self, connection, event):
         print("Joined channel: " + event.target)
         self.print_info(f"Joined channel: target={event.target} source={event.source}")
         self.app.builder.get_object("main_stack").set_visible_child_name("page_chat")
+        nick = event.source.nick
+        self.app.user_store.append([get_markup_from_nick(nick), nick])
+
+    def on_namreply(self, connection, event):
+        channel = event.arguments[1]
+        users = event.arguments[2].split()
+        self.channel_users[channel] = users
+        self.app.update_users()
 
     def on_notice(self, connection, event):
         self.print_info("Notice: " + event.source + " " + event.arguments[0])
@@ -70,8 +80,13 @@ class IRCClient(irc.client.SimpleIRCClient):
     def on_nick(self, connection, event):
         self.print_info(f"Nick: target={event.target} source={event.source}")
 
+    @idle
     def on_part(self, connection, event):
         self.print_info(f"Part: target={event.target} source={event.source}")
+        nick = event.source.nick
+        channel = event.target
+        self.channel_users[channel].remove(nick)
+        self.app.update_users()
 
     def on_all_raw_messages(self, connection, event):
         self.print_info("Raw message: " + str(event.arguments))
@@ -113,13 +128,21 @@ class IRCApp(Gtk.Application):
         self.store = Gtk.ListStore(str, str) # nick, message
         self.treeview.set_model(self.store)
 
-        renderer_nick = Gtk.CellRendererText()
-        column_nick = Gtk.TreeViewColumn("Nick", renderer_nick, markup=0)
-        self.treeview.append_column(column_nick)
+        renderer = Gtk.CellRendererText()
+        col = Gtk.TreeViewColumn("", renderer, markup=0)
+        self.treeview.append_column(col)
 
-        renderer_msg = Gtk.CellRendererText()
-        column_msg = Gtk.TreeViewColumn("Message", renderer_msg, markup=1)
-        self.treeview.append_column(column_msg)
+        renderer = Gtk.CellRendererText()
+        col = Gtk.TreeViewColumn("", renderer, markup=1)
+        self.treeview.append_column(col)
+
+        self.user_treeview = self.builder.get_object("treeview_users")
+        self.user_store = Gtk.ListStore(str, str) # nick, raw_nick
+        self.user_treeview.set_model(self.user_store)
+
+        renderer = Gtk.CellRendererText()
+        col = Gtk.TreeViewColumn("Users", renderer, markup=0)
+        self.user_treeview.append_column(col)
 
         self.nickname =  generate_username()
         self.builder.get_object("label_username").set_markup(get_markup_from_nick(self.nickname))
@@ -149,6 +172,13 @@ class IRCApp(Gtk.Application):
         iter = self.store.append([get_markup_from_nick(nick), message])
         path = self.store.get_path(iter)
         self.treeview.scroll_to_cell(path, None, False, 0.0, 0.0)
+
+
+    @idle
+    def update_users(self):
+        self.user_store.clear()
+        for user in self.client.channel_users["#minttest"]:
+            self.user_store.append([get_markup_from_nick(user), user])
 
     @_async
     def connect(self):
