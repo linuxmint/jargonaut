@@ -36,3 +36,4 @@ Under the hood it uses IRC, though it makes no difference from a user point of v
 - add a line in the treeview to indicate where the last read message was
 - add keywords in the desktop file
 - ability to ignore users (probably means we need a unique way of IDing them as well)
+- dark mode
