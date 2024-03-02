@@ -50,7 +50,7 @@ def is_valid_rgb(color):
     return match is not None
 
 class IRCClient(irc.client.SimpleIRCClient):
-    def __init__(self, ui):
+    def __init__(self, app):
         irc.client.SimpleIRCClient.__init__(self)
         self.app = app
         self.channel_users = {}
