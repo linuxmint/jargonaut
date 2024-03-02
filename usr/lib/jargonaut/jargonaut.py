@@ -3,7 +3,8 @@
 import gi
 import irc.client
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, Gio, GLib, Gdk
+gi.require_version('XApp', '1.0')
+from gi.repository import Gtk, Gio, GLib, Gdk, XApp
 from irc.connection import Factory
 import random
 import threading
@@ -133,6 +134,8 @@ class IRCApp(Gtk.Application):
         self.port = self.settings.get_int("port")
         self.tls = self.settings.get_boolean("tls-connection")
         self.nickname = self.get_new_nickname()
+
+        self.dark_mode_manager = XApp.DarkModeManager.new(self.settings.get_boolean("prefer-dark-mode"))
 
         self.last_key_press_is_tab = False
 
