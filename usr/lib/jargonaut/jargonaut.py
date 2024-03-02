@@ -11,6 +11,7 @@ import getpass
 import random
 import re
 import ssl
+import gettext
 
 # Used as a decorator to run things in the background
 def _async(func):
@@ -65,12 +66,22 @@ class IRCClient(irc.client.SimpleIRCClient):
         self.print_info(f"Joined channel: target={event.target} source={event.source}")
         self.app.builder.get_object("main_stack").set_visible_child_name("page_chat")
         nick = event.source.nick
-        self.app.user_store.append([get_markup_from_nick(nick), nick])
+        channel = event.target
+        if nick not in self.channel_users[channel]:
+            self.channel_users[channel].append(nick)
+            self.app.update_users()
 
     def on_namreply(self, connection, event):
         channel = event.arguments[1]
         users = event.arguments[2].split()
-        self.channel_users[channel] = users
+        clean_users = []
+        for user in users:
+            for character in ["~", "&", "@", "%", "+"]:
+                if user.startswith(character):
+                    user = user[1:]
+                    break
+            clean_users.append(user)
+        self.channel_users[channel] = clean_users
         self.app.update_users()
 
     def on_notice(self, connection, event):
@@ -85,8 +96,9 @@ class IRCClient(irc.client.SimpleIRCClient):
         self.print_info(f"Part: target={event.target} source={event.source}")
         nick = event.source.nick
         channel = event.target
-        self.channel_users[channel].remove(nick)
-        self.app.update_users()
+        if nick in self.channel_users[channel]:
+            self.channel_users[channel].remove(nick)
+            self.app.update_users()
 
     def on_all_raw_messages(self, connection, event):
         self.print_info("Raw message: " + str(event.arguments))
@@ -231,7 +243,16 @@ class IRCApp(Gtk.Application):
     @idle
     def update_users(self):
         self.user_store.clear()
-        for user in self.client.channel_users["#minttest"]:
+        users = self.client.channel_users["#minttest"]
+        box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=5)
+        icon = Gtk.Image.new_from_icon_name("system-users-symbolic", Gtk.IconSize.MENU)
+        box.pack_start(icon, True, True, 0)
+        box.pack_start(Gtk.Label(label=len(users)), True, True, 0)
+        column = self.user_treeview.get_column(0)
+        column.set_widget(box)
+        column.set_alignment(0.5)
+        box.show_all()
+        for user in users:
             self.user_store.append([get_markup_from_nick(user), user])
 
     @_async

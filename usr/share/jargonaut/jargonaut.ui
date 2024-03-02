@@ -150,7 +150,6 @@
                       <object class="GtkTreeView" id="treeview_users">
                         <property name="visible">True</property>
                         <property name="can-focus">True</property>
-                        <property name="enable-search">False</property>
                       </object>
                     </child>
                   </object>
