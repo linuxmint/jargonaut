@@ -4,11 +4,13 @@ import gi
 import irc.client
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gio, GObject
+from irc.connection import Factory
 import random
 import threading
 import getpass
 import random
 import re
+import ssl
 
 # Used as a decorator to run things in the background
 def _async(func):
@@ -150,7 +152,8 @@ class IRCApp(Gtk.Application):
 
     @_async
     def connect(self):
-        self.client.connect("irc.spotchat.org", 6667, self.nickname)
+        factory = Factory(wrapper=ssl.wrap_socket)
+        self.client.connect("irc.spotchat.org", 6697, self.nickname, connect_factory=factory)
         self.client.start()
 
 app = IRCApp()
