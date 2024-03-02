@@ -8,30 +8,42 @@ Under the hood it uses IRC, though it makes no difference from a user point of v
 
 # TODO
 
-- Set up translations
-- Connect to multiple channels
-- Make the IRC info (server, channels) configurable in gsettings
-- Allow text format in the enty (bold, italic..etc)
-- Support DND of files (via pastebin) and images (via imgur)
-- Filter unwanted words
-- Show the list of users in the room and a number of people connected
+## rendering
+
+- Switch to HTML/CSS
+- Implement spoiler tag
+- Add timestamps
+- Make links clickable
+- add a line in the treeview to indicate where the last read message was
+- wordwrap
+- Sup in nickname makes things harder to read
+- Implement thumbs for pictures?
+- Put lines closer to one-another
+
+## UI/Settings
+
 - Add an error page
 - Design an icon
+- Make the IRC info (server, channels) configurable in gsettings
+- Allow text format in the enty (bold, italic..etc)
+- dark mode
+- Let user choose nickname (vs username)
+- Add a settings page
+
+## Other
+
+- Don't correlate unique suffix and color, use pre-determined colors which work well, based on who is read in which order (i.e. people will have different colors on different client instances, but that's ok)
+- Connect to multiple channels
+- Filter unwanted words
+- Support DND of files (via pastebin) and images (via imgur)
 - Implement a tray
 - Notify the user when quoted
-- Add a settings page
-- Add timestamps
 - Document the project scope (this isn't meant to be a full IRC client)
-- Make links clickable
-- Implement thumbs for pictures?
-- Implement spoiler tag
-- Let user choose nickname (vs username)
-- Don't correlate unique suffix and color, use pre-determined colors which work well, based on who is read in which order (i.e. people will have different colors on different client instances, but that's ok)
-- Put lines closer to one-another
-- Sup in nickname makes things harder to read
-- wordwrap
 - support /me command
-- add a line in the treeview to indicate where the last read message was
-- add keywords in the desktop file
 - ability to ignore users (probably means we need a unique way of IDing them as well)
-- dark mode
+
+## Localization
+
+- Check i18n
+- add keywords in the desktop file
+- Set up translations
