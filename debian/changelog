@@ -1,3 +1,16 @@
+jargonaut (1.0.2) wilma; urgency=medium
+
+  * Fix TLS with Python 3.12
+  * Fix wrong variable name
+  * Rename connect()
+  * Turn the App into a singleton
+  * Fix GObject.idle_add deprecation
+  * Add autocompletion
+  * Fix userlist, add a user count
+  * Update README
+
+ -- Clement Lefebvre <root@linuxmint.com>  Sat, 02 Mar 2024 18:07:21 +0000
+
 jargonaut (1.0.1) wilma; urgency=medium
 
   * Update README
