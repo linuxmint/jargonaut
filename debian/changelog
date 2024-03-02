@@ -1,3 +1,13 @@
+jargonaut (1.0.1) wilma; urgency=medium
+
+  * Update README
+  * Don't allow empty messages to be sent
+  * Autoscroll
+  * Connect with TLS
+  * Add a user list
+
+ -- Clement Lefebvre <root@linuxmint.com>  Sat, 02 Mar 2024 01:22:13 +0000
+
 jargonaut (1.0.0) wilma; urgency=medium
 
   * Initial version
