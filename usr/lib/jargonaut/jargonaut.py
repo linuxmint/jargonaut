@@ -148,7 +148,7 @@ class IRCApp(Gtk.Application):
         self.builder.get_object("label_username").set_markup(get_markup_from_nick(self.nickname))
 
         self.client = IRCClient(self)
-        self.connect()
+        self.connect_to_server()
 
     def do_startup(self):
         Gtk.Application.do_startup(self)
@@ -181,7 +181,7 @@ class IRCApp(Gtk.Application):
             self.user_store.append([get_markup_from_nick(user), user])
 
     @_async
-    def connect(self):
+    def connect_to_server(self):
         factory = Factory(wrapper=ssl.SSLContext(ssl.PROTOCOL_TLS).wrap_socket)
         self.client.connect("irc.spotchat.org", 6697, self.nickname, connect_factory=factory)
         self.client.start()
