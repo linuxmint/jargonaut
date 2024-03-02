@@ -257,7 +257,7 @@ class IRCApp(Gtk.Application):
     @_async
     def send_message(self, message):
         message = message.replace('\x16', '\x1D')
-        self.client.connection.privmsg(self.app.channel, message)
+        self.client.connection.privmsg(self.channel, message)
 
     @idle
     def print_message(self, nick, message):
