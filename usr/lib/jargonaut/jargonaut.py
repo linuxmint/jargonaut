@@ -114,14 +114,19 @@ class IRCClient(irc.client.SimpleIRCClient):
 
 class IRCApp(Gtk.Application):
     def __init__(self):
-        Gtk.Application.__init__(self)
+        super().__init__(application_id="org.x.jargonaut")
+        self.window = None
 
     def do_activate(self):
+        # If the window already exists, present it to the user
+        if self.window is not None:
+            self.window.present()
+            return
         self.builder = Gtk.Builder()
         self.builder.add_from_file("/usr/share/jargonaut/jargonaut.ui")
-        win = self.builder.get_object("main_window")
-        win.set_application(self)
-        win.show_all()
+        self.window = self.builder.get_object("main_window")
+        self.window.set_application(self)
+        self.window.show_all()
 
         self.builder.get_object("entry_main").connect("activate", self.send_message)
         self.treeview = self.builder.get_object("treeview_chat")
