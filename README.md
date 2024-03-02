@@ -24,11 +24,8 @@ Under the hood it uses IRC, though it makes no difference from a user point of v
 
 - Add an error page
 - Design an icon
-- Make the IRC info (server, channels) configurable in gsettings
-- Allow text format in the enty (bold, italic..etc)
-- dark mode
-- Let user choose nickname (vs username)
 - Add a settings page
+- decouple default settings from mint values
 
 ## Other
 
