@@ -3,7 +3,7 @@
 import gi
 import irc.client
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, Gio, GLib
+from gi.repository import Gtk, Gio, GLib, Gdk
 from irc.connection import Factory
 import random
 import threading
@@ -122,13 +122,15 @@ class IRCApp(Gtk.Application):
         if self.window is not None:
             self.window.present()
             return
+
+        self.last_key_press_is_tab = False
+
         self.builder = Gtk.Builder()
         self.builder.add_from_file("/usr/share/jargonaut/jargonaut.ui")
         self.window = self.builder.get_object("main_window")
         self.window.set_application(self)
         self.window.show_all()
 
-        self.builder.get_object("entry_main").connect("activate", self.send_message)
         self.treeview = self.builder.get_object("treeview_chat")
         self.store = Gtk.ListStore(str, str) # nick, message
         self.treeview.set_model(self.store)
@@ -145,6 +147,16 @@ class IRCApp(Gtk.Application):
         self.user_store = Gtk.ListStore(str, str) # nick, raw_nick
         self.user_treeview.set_model(self.user_store)
 
+        completion = Gtk.EntryCompletion()
+        completion.set_model(self.user_store)
+        completion.set_text_column(1)
+        completion.set_inline_completion(True)
+        completion.set_popup_completion(True)
+
+        self.entry = self.builder.get_object("entry_main")
+        self.entry.set_completion(completion)
+        self.entry.connect("key-press-event", self.on_key_press_event)
+
         renderer = Gtk.CellRendererText()
         col = Gtk.TreeViewColumn("Users", renderer, markup=0)
         self.user_treeview.append_column(col)
@@ -155,17 +167,54 @@ class IRCApp(Gtk.Application):
         self.client = IRCClient(self)
         self.connect_to_server()
 
+    def on_key_press_event(self, widget, event):
+        keyname = Gdk.keyval_name(event.keyval)
+        if keyname == "Tab":
+            text = widget.get_text()
+            if " " in text:
+                return True
+            if text == "":
+                return True
+            completion = widget.get_completion()
+            model = completion.get_model()
+            if len(model) > 0:
+                num_matches = 0
+                for row in model:
+                    if row[1].startswith(text):
+                        num_matches += 1
+                if num_matches > 0:
+                    # Adding prefix
+                    completion.insert_prefix()
+                    if num_matches == 1:
+                        # Adding suffix (cause single match)
+                        widget.set_text(text + ": ")
+                    elif self.last_key_press_is_tab:
+                        # Adding suffix (cause double tab)
+                        widget.set_text(text + ": ")
+                widget.set_position(-1)
+                self.last_key_press_is_tab = True
+            return True  # Stop propagation of the event
+        elif keyname == "Return":
+            self.last_key_press_is_tab = False
+            message = widget.get_text().strip()
+            if message != "":
+                completion = widget.get_completion()
+                widget.set_completion(None)
+                widget.set_text("")
+                widget.set_completion(completion)
+                self.print_message(self.nickname, message)
+                self.send_message(message)
+            return True
+        else:
+            self.last_key_press_is_tab = False
+            return False
+
     def do_startup(self):
         Gtk.Application.do_startup(self)
 
     @_async
-    def send_message(self, widget):
-        entry = self.builder.get_object("entry_main")
-        message = entry.get_text().strip()
-        if message != "":
-            entry.set_text("")
-            self.client.connection.privmsg("#minttest", message)
-            self.print_message(self.nickname, message)
+    def send_message(self, message):
+        self.client.connection.privmsg("#minttest", message)
 
     @idle
     def print_message(self, nick, message):
