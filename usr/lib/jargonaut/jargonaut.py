@@ -181,8 +181,10 @@ class IRCApp(Gtk.Application):
 
     def on_key_press_event(self, widget, event):
         keyname = Gdk.keyval_name(event.keyval)
+        ctrl = (event.state & Gdk.ModifierType.CONTROL_MASK)
+        position = widget.get_position()
+        text = widget.get_text()
         if keyname == "Tab":
-            text = widget.get_text()
             if " " in text:
                 return True
             if text == "":
@@ -206,9 +208,10 @@ class IRCApp(Gtk.Application):
                 widget.set_position(-1)
                 self.last_key_press_is_tab = True
             return True  # Stop propagation of the event
-        elif keyname == "Return":
+        else:
             self.last_key_press_is_tab = False
-            message = widget.get_text().strip()
+        if keyname == "Return":
+            message = text.strip()
             if message != "":
                 completion = widget.get_completion()
                 widget.set_completion(None)
@@ -217,21 +220,41 @@ class IRCApp(Gtk.Application):
                 self.print_message(self.nickname, message)
                 self.send_message(message)
             return True
-        else:
-            self.last_key_press_is_tab = False
-            return False
+        elif ctrl and keyname == "b":
+            widget.set_text(text + "\x02")
+            widget.set_position(position + 1)
+            return True
+        elif ctrl and keyname == "i":
+            # This should be \x1D but Gtk.Entry won't accept it
+            # so we use \x16 instead and we replace it when sending
+            # the message
+            widget.set_text(text + "\x16")
+            widget.set_position(position + 1)
+            return True
+        elif ctrl and keyname == "u":
+            widget.set_text(text + "\x1F")
+            widget.set_position(position + 1)
+            return True
+        elif ctrl and keyname == "s":
+            widget.set_text(text + "\x1E")
+            widget.set_position(position + 1)
+            return True
+
+        return False
 
     def do_startup(self):
         Gtk.Application.do_startup(self)
 
     @_async
     def send_message(self, message):
+        message = message.replace('\x16', '\x1D')
         self.client.connection.privmsg("#minttest", message)
 
     @idle
     def print_message(self, nick, message):
         # Format text (IRC codes -> pango)
         message = re.sub(r'\x02(.*?)\x02', r'<b>\1</b>', message)
+        message = re.sub(r'\x16(.*?)\x16', r'<i>\1</i>', message)
         message = re.sub(r'\x1D(.*?)\x1D', r'<i>\1</i>', message)
         message = re.sub(r'\x1F(.*?)\x1F', r'<u>\1</u>', message)
         message = re.sub(r'\x1E(.*?)\x1E', r'<s>\1</s>', message)
