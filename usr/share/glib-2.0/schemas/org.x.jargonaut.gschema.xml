@@ -1,15 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <schemalist>
-
   <schema path="/org/x/jargonaut/" id="org.x.jargonaut">
-
-    <key name='server' type='s'>
-      <default>'irc.freenode.org'</default>
-      <summary></summary>
-      <description></description>
+    <key name="tls-connection" type="b">
+      <default>true</default>
     </key>
-
+    <key name="server" type="s">
+      <default>"irc.spotchat.org"</default>
+    </key>
+    <key name="port" type="i">
+      <default>6697</default>
+    </key>
+    <key name="channel" type="s">
+      <default>"#minttest"</default>
+    </key>
+    <key name="nickname" type="s">
+      <default>""</default>
+    </key>
   </schema>
-
 </schemalist>

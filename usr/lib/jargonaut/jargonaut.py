@@ -28,13 +28,6 @@ def idle(func):
         GLib.idle_add(func, *args)
     return wrapper
 
-def generate_username():
-    r = random.randint(0, 255)
-    g = random.randint(0, 255)
-    b = random.randint(0, 255)
-    color = '{:02x}{:02x}{:02x}'.format(r, g, b)
-    return f"{getpass.getuser()}_{color}"
-
 def get_markup_from_nick(nick):
     color = "#000000"
     if "_" in nick:
@@ -57,8 +50,8 @@ class IRCClient(irc.client.SimpleIRCClient):
         self.channel_users = {}
 
     def on_welcome(self, connection, event):
-        connection.join("#minttest")
-        connection.names(["#minttest"])
+        connection.join(self.app.channel)
+        connection.names([self.app.channel])
 
     @idle
     def on_join(self, connection, event):
@@ -110,11 +103,10 @@ class IRCClient(irc.client.SimpleIRCClient):
 
     def on_nicknameinuse(self, connection, event):
         self.print_error("Nickname in use")
-        new_nickname =  generate_username()
-        connection.nick(new_nickname)
-        self.print_error("Nickname in use, trying with " + new_nickname)
-        self.app.builder.get_object("label_username").set_markup(get_markup_from_nick(new_nickname))
-        self.app.nickname = new_nickname
+        self.app.nickname =  self.app.get_new_nickname(with_random_suffix=True)
+        connection.nick(self.app.nickname)
+        self.print_error("Nickname in use, trying with " + self.app.nickname)
+        self.app.builder.get_object("label_username").set_markup(get_markup_from_nick(self.app.nickname))
 
     @idle
     def print_error(self, message):
@@ -134,6 +126,13 @@ class IRCApp(Gtk.Application):
         if self.window is not None:
             self.window.present()
             return
+
+        self.settings = Gio.Settings(schema="org.x.jargonaut")
+        self.channel = self.settings.get_string("channel")
+        self.server = self.settings.get_string("server")
+        self.port = self.settings.get_int("port")
+        self.tls = self.settings.get_boolean("tls-connection")
+        self.nickname = self.get_new_nickname()
 
         self.last_key_press_is_tab = False
 
@@ -173,11 +172,21 @@ class IRCApp(Gtk.Application):
         col = Gtk.TreeViewColumn("Users", renderer, markup=0)
         self.user_treeview.append_column(col)
 
-        self.nickname =  generate_username()
         self.builder.get_object("label_username").set_markup(get_markup_from_nick(self.nickname))
 
         self.client = IRCClient(self)
         self.connect_to_server()
+
+    def get_new_nickname(self, with_random_suffix=False):
+        if self.settings.get_string("nickname") != "":
+            prefix = self.settings.get_string("nickname")
+        else:
+            prefix = getpass.getuser()
+        if with_random_suffix:
+            suffix = '{:02x}'.format(random.randint(0, 255))
+            return f"{prefix}_{suffix}"
+        else:
+            return prefix
 
     def on_key_press_event(self, widget, event):
         keyname = Gdk.keyval_name(event.keyval)
@@ -248,7 +257,7 @@ class IRCApp(Gtk.Application):
     @_async
     def send_message(self, message):
         message = message.replace('\x16', '\x1D')
-        self.client.connection.privmsg("#minttest", message)
+        self.client.connection.privmsg(self.app.channel, message)
 
     @idle
     def print_message(self, nick, message):
@@ -262,11 +271,10 @@ class IRCApp(Gtk.Application):
         path = self.store.get_path(iter)
         self.treeview.scroll_to_cell(path, None, False, 0.0, 0.0)
 
-
     @idle
     def update_users(self):
         self.user_store.clear()
-        users = self.client.channel_users["#minttest"]
+        users = self.client.channel_users[self.channel]
         box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=5)
         icon = Gtk.Image.new_from_icon_name("system-users-symbolic", Gtk.IconSize.MENU)
         box.pack_start(icon, True, True, 0)
@@ -280,8 +288,15 @@ class IRCApp(Gtk.Application):
 
     @_async
     def connect_to_server(self):
-        factory = Factory(wrapper=ssl.SSLContext(ssl.PROTOCOL_TLS).wrap_socket)
-        self.client.connect("irc.spotchat.org", 6697, self.nickname, connect_factory=factory)
+        if self.tls:
+            factory = Factory(wrapper=ssl.SSLContext(ssl.PROTOCOL_TLS).wrap_socket)
+            self.client.connect(self.settings.get_string("server"),
+                                self.settings.get_int("port"),
+                                self.nickname, connect_factory=factory)
+        else:
+            self.client.connect(self.settings.get_string("server"),
+                                self.settings.get_int("port"),
+                                self.nickname)
         self.client.start()
 
 app = IRCApp()
