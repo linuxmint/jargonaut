@@ -182,7 +182,7 @@ class IRCApp(Gtk.Application):
 
     @_async
     def connect(self):
-        factory = Factory(wrapper=ssl.wrap_socket)
+        factory = Factory(wrapper=ssl.SSLContext(ssl.PROTOCOL_TLS).wrap_socket)
         self.client.connect("irc.spotchat.org", 6697, self.nickname, connect_factory=factory)
         self.client.start()
 
