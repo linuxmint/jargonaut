@@ -1,4 +1,5 @@
 #!/bin/bash
 intltool-extract --type=gettext/glade usr/share/jargonaut/jargonaut.ui
+intltool-extract --type=gettext/glade usr/share/jargonaut/shortcuts.ui
 xgettext --language=Python -cTRANSLATORS --keyword=_ --keyword=N_ --output=jargonaut.pot usr/lib/jargonaut/*.py usr/bin/* usr/share/jargonaut/*.ui.h
 rm -f usr/share/jargonaut/*.ui.h
