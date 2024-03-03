@@ -85,6 +85,16 @@ class IRCClient(irc.client.SimpleIRCClient):
             self.app.assign_color(nick)
             self.channel_users[channel].append(nick)
             self.app.update_users()
+        if nick == self.app.nickname:
+            self.identify()
+
+    @_async
+    def identify(self):
+        username = self.app.settings.get_string("nickname")
+        password = self.app.settings.get_string("password")
+        if password != "":
+            print("Identifying...")
+            self.connection.privmsg("Nickserv", f"IDENTIFY {username} {password}")
 
     def on_namreply(self, connection, event):
         channel = event.arguments[1]
@@ -246,6 +256,7 @@ class IRCApp(Gtk.Application):
 
         # Settings widgets
         self.bind_entry_widget("nickname", self.builder.get_object("pref_nickname"))
+        self.bind_entry_widget("password", self.builder.get_object("pref_password"))
         self.bind_switch_widget("prefer-dark-mode", self.builder.get_object("pref_dark"), fn_callback=self.update_dark_mode)
 
         self.treeview = self.builder.get_object("treeview_chat")

@@ -16,6 +16,9 @@
     <key name="nickname" type="s">
       <default>""</default>
     </key>
+    <key name="password" type="s">
+      <default>""</default>
+    </key>
     <key name="prefer-dark-mode" type="b">
       <default>false</default>
     </key>
