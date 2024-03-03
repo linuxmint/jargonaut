@@ -505,8 +505,8 @@ class IRCApp(Gtk.Application):
             nickname = "*"
             sep = ">"
             message = f"<span foreground='grey'>{message}</span>"
-        elif self.nickname in words or (self.nickname+":") in words or ("@"+self.nickname) in words:
-            message = f"<span foreground='green'>{message}</span>"
+        elif self.nickname.lower() in words or (self.nickname+":").lower() in words or ("@"+self.nickname).lower() in words:
+            message = f"<span foreground='red'>{message}</span>"
         if nick == self.last_message_nick:
             nickname = ""
         iter = self.store.append([self.get_nick_markup(nickname), message, sep])
