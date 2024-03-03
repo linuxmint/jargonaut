@@ -1,3 +1,13 @@
 treeview {
     font-family: Monospace;
 }
+
+headerbar {
+    background-image: repeating-linear-gradient(
+    135deg,
+    rgba(85, 60, 154, 0.1),
+    rgba(85, 60, 154, 0.1) 50px,
+    rgba(179, 147, 211, 0.1) 50px,
+    rgba(179, 147, 211, 0.1) 100px
+  ),radial-gradient(circle at center,transparent 20%,rgba(0, 0, 0, 0.3));
+}
