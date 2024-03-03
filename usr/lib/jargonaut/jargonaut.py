@@ -4,7 +4,7 @@ import gi
 import irc.client
 gi.require_version('Gtk', '3.0')
 gi.require_version('XApp', '1.0')
-from gi.repository import Gtk, Gio, GLib, Gdk, XApp
+from gi.repository import Gtk, Gio, GLib, Gdk, XApp, Pango
 from irc.connection import Factory
 import random
 import threading
