@@ -28,26 +28,24 @@ _ = gettext.gettext
 
 
 color_palette = [
-    "#E6194B",  # Rouge
-    "#3CB44B",  # Vert
-    "#FFE119",  # Jaune
+    "#E6194B",  # Red
+    "#3CB44B",  # Green
+    "#D1A75A",  # Jaune
     "#4363D8",  # Bleu
     "#F58231",  # Orange
     "#911EB4",  # Violet
     "#42D4F4",  # Cyan
     "#F032E6",  # Magenta
-    "#BFEF45",  # Vert clair
-    "#FABEBE",  # Rose
+    "#7BDC9A",  # Vert clair
+    "#efb6b6",  # Rose
     "#469990",  # Vert d'eau
-    "#E6BEFF",  # Lavande
+    "#d3afeb",  # Lavande
     "#9A6324",  # Brun
-    "#FFFAC8",  # Jaune pâle
     "#800000",  # Marron
     "#AAFFC3",  # Vert menthe
     "#808000",  # Olive
-    "#FFD8B1",  # Pêche
     "#000075",  # Bleu marine
-    "#A9A9A9"   # Gris
+    "#A5A5A5"   # Gris
 ]
 
 # Used as a decorator to run things in the background
@@ -382,7 +380,9 @@ class IRCApp(Gtk.Application):
 
     def assign_color(self, nick):
         if nick not in self.user_colors.keys():
-            self.user_colors[nick] = color_palette[self.color_index]
+            color = color_palette[self.color_index]
+            print(f"Assigning color {color} to {nick}")
+            self.user_colors[nick] = color
             self.color_index = (self.color_index + 1) % len(color_palette)
 
     def get_nick_markup(self, nick):
