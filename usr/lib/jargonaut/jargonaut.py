@@ -279,6 +279,7 @@ class IRCApp(Gtk.Application):
         self.user_treeview = self.builder.get_object("treeview_users")
         self.user_store = Gtk.ListStore(str, str) # nick, raw_nick
         self.user_treeview.set_model(self.user_store)
+        self.user_store.set_sort_column_id(1, Gtk.SortType.ASCENDING)
 
         completion = Gtk.EntryCompletion()
         completion.set_model(self.user_store)
