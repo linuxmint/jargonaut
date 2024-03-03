@@ -1,3 +1,12 @@
+jargonaut (1.0.4) wilma; urgency=medium
+
+  * Add a fancy style in the headerbar
+  * Add a sidebar for channels, help, rules, settings.
+  * Implement menu
+  * Add shortcuts.ui to makepot
+
+ -- Clement Lefebvre <root@linuxmint.com>  Sun, 03 Mar 2024 14:25:56 +0000
+
 jargonaut (1.0.3) wilma; urgency=medium
 
   * Add keyboard shortcuts for text formatting
