@@ -11,14 +11,15 @@ Under the hood it uses IRC, though it makes no difference from a user point of v
 ## rendering
 
 - Switch to HTML/CSS
-- Add timestamps
-- Make links clickable
-- wordwrap
-- Put lines closer to one-another
+	- Add timestamps
+	- Make links clickable
+	- wordwrap
+	- Put lines closer to one-another
 
 ## Other
 
 - Connect to multiple channels
+- Refactor OOP
 
 # Todo 2.0
 
@@ -34,7 +35,7 @@ Under the hood it uses IRC, though it makes no difference from a user point of v
 
 ## Rendering
 
-- add a line in the treeview to indicate where the last read message was
+- add a line to indicate where the last read message was
 - Implement thumbs for pictures?
 
 ## Features
@@ -47,5 +48,4 @@ Under the hood it uses IRC, though it makes no difference from a user point of v
 - Filter unwanted words
 - Support DND of files (via pastebin) and images (via imgur)
 - Implement spoiler tag
-- Support password/nickserv authentication
 - Add inxi automation
