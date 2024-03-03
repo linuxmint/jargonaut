@@ -14,6 +14,29 @@ import re
 import ssl
 import gettext
 
+color_palette = [
+    "#E6194B",  # Rouge
+    "#3CB44B",  # Vert
+    "#FFE119",  # Jaune
+    "#4363D8",  # Bleu
+    "#F58231",  # Orange
+    "#911EB4",  # Violet
+    "#42D4F4",  # Cyan
+    "#F032E6",  # Magenta
+    "#BFEF45",  # Vert clair
+    "#FABEBE",  # Rose
+    "#469990",  # Vert d'eau
+    "#E6BEFF",  # Lavande
+    "#9A6324",  # Brun
+    "#FFFAC8",  # Jaune pâle
+    "#800000",  # Marron
+    "#AAFFC3",  # Vert menthe
+    "#808000",  # Olive
+    "#FFD8B1",  # Pêche
+    "#000075",  # Bleu marine
+    "#A9A9A9"   # Gris
+]
+
 # Used as a decorator to run things in the background
 def _async(func):
     def wrapper(*args, **kwargs):
@@ -28,21 +51,6 @@ def idle(func):
     def wrapper(*args):
         GLib.idle_add(func, *args)
     return wrapper
-
-def get_markup_from_nick(nick):
-    color = "#000000"
-    if "_" in nick:
-        prefix = nick.split("_")[0]
-        suffix = nick.split("_")[1]
-        if re.fullmatch(r"[0-9a-fA-F]{6}", suffix) is not None:
-            # suffix is a valid RGB code
-            color = "#" + suffix
-            nick = f"<span foreground='{color}'>{prefix} <sup>{suffix}</sup></span>"
-    return nick
-
-def is_valid_rgb(color):
-    match = re.fullmatch(r"#[0-9a-fA-F]{6}", color)
-    return match is not None
 
 class IRCClient(irc.client.SimpleIRCClient):
     def __init__(self, app):
@@ -62,6 +70,7 @@ class IRCClient(irc.client.SimpleIRCClient):
         nick = event.source.nick
         channel = event.target
         if nick not in self.channel_users[channel]:
+            self.app.assign_color(nick)
             self.channel_users[channel].append(nick)
             self.app.update_users()
 
@@ -75,6 +84,7 @@ class IRCClient(irc.client.SimpleIRCClient):
                     user = user[1:]
                     break
             clean_users.append(user)
+            self.app.assign_color(user)
         self.channel_users[channel] = clean_users
         self.app.update_users()
 
@@ -105,9 +115,10 @@ class IRCClient(irc.client.SimpleIRCClient):
     def on_nicknameinuse(self, connection, event):
         self.print_error("Nickname in use")
         self.app.nickname =  self.app.get_new_nickname(with_random_suffix=True)
+        self.app.assign_color(self.app.nickname)
         connection.nick(self.app.nickname)
         self.print_error("Nickname in use, trying with " + self.app.nickname)
-        self.app.builder.get_object("label_username").set_markup(get_markup_from_nick(self.app.nickname))
+        self.app.builder.get_object("label_username").set_markup(self.app.get_nick_markup(self.app.nickname))
 
     @idle
     def print_error(self, message):
@@ -128,6 +139,9 @@ class IRCApp(Gtk.Application):
             self.window.present()
             return
 
+        self.user_colors = {}
+        self.color_index = 0
+
         self.settings = Gio.Settings(schema="org.x.jargonaut")
         self.channel = self.settings.get_string("channel")
         self.server = self.settings.get_string("server")
@@ -146,13 +160,19 @@ class IRCApp(Gtk.Application):
         self.window.show_all()
 
         self.treeview = self.builder.get_object("treeview_chat")
-        self.store = Gtk.ListStore(str, str) # nick, message
+        self.store = Gtk.ListStore(str, str, str) # nick, message
         self.treeview.set_model(self.store)
         font_desc = Pango.FontDescription("Monospace")
         self.treeview.modify_font(font_desc)
 
         renderer = Gtk.CellRendererText()
         col = Gtk.TreeViewColumn("", renderer, markup=0)
+        col.set_name("first_column")
+        self.treeview.append_column(col)
+
+        # Add a dedicated column which always renders |
+        renderer = Gtk.CellRendererText()
+        col = Gtk.TreeViewColumn("", renderer, text=2)
         self.treeview.append_column(col)
 
         renderer = Gtk.CellRendererText()
@@ -178,10 +198,21 @@ class IRCApp(Gtk.Application):
         col = Gtk.TreeViewColumn("Users", renderer, markup=0)
         self.user_treeview.append_column(col)
 
-        self.builder.get_object("label_username").set_markup(get_markup_from_nick(self.nickname))
+        self.assign_color(self.nickname)
+        self.builder.get_object("label_username").set_markup(self.get_nick_markup(self.nickname))
 
         self.client = IRCClient(self)
         self.connect_to_server()
+
+    def assign_color(self, nick):
+        if nick not in self.user_colors.keys():
+            self.user_colors[nick] = color_palette[self.color_index]
+            self.color_index = (self.color_index + 1) % len(color_palette)
+
+    def get_nick_markup(self, nick):
+        color = self.user_colors[nick]
+        nick = f"<span foreground='{color}'>{nick}</span>"
+        return nick
 
     def get_new_nickname(self, with_random_suffix=False):
         if self.settings.get_string("nickname") != "":
@@ -273,7 +304,7 @@ class IRCApp(Gtk.Application):
         message = re.sub(r'\x1D(.*?)\x1D', r'<i>\1</i>', message)
         message = re.sub(r'\x1F(.*?)\x1F', r'<u>\1</u>', message)
         message = re.sub(r'\x1E(.*?)\x1E', r'<s>\1</s>', message)
-        iter = self.store.append([get_markup_from_nick(nick), message])
+        iter = self.store.append([self.get_nick_markup(nick), message, "|"])
         path = self.store.get_path(iter)
         self.treeview.scroll_to_cell(path, None, False, 0.0, 0.0)
 
@@ -290,7 +321,7 @@ class IRCApp(Gtk.Application):
         column.set_alignment(0.5)
         box.show_all()
         for user in users:
-            self.user_store.append([get_markup_from_nick(user), user])
+            self.user_store.append([self.get_nick_markup(user), user])
 
     @_async
     def connect_to_server(self):
