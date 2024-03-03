@@ -19,5 +19,9 @@
     <key name="prefer-dark-mode" type="b">
       <default>false</default>
     </key>
+      <key name="debug" type="b">
+      <default>false</default>
+      <summary>Whether to print debug information to stdout</summary>
+    </key>
   </schema>
 </schemalist>

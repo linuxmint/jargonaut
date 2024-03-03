@@ -64,7 +64,6 @@ class IRCClient(irc.client.SimpleIRCClient):
 
     @idle
     def on_join(self, connection, event):
-        print("Joined channel: " + event.target)
         self.print_info(f"Joined channel: target={event.target} source={event.source}")
         self.app.builder.get_object("main_stack").set_visible_child_name("page_chat")
         nick = event.source.nick
@@ -105,7 +104,8 @@ class IRCClient(irc.client.SimpleIRCClient):
             self.app.update_users()
 
     def on_all_raw_messages(self, connection, event):
-        self.print_info("Raw message: " + str(event.arguments))
+        if self.app.settings.get_boolean("debug"):
+            self.print_info("Raw message: " + str(event.arguments))
 
     def on_pubmsg(self, connection, event):
         nick = event.source.split('!')[0]
@@ -113,11 +113,10 @@ class IRCClient(irc.client.SimpleIRCClient):
         self.app.print_message(nick, message)
 
     def on_nicknameinuse(self, connection, event):
-        self.print_error("Nickname in use")
         self.app.nickname =  self.app.get_new_nickname(with_random_suffix=True)
         self.app.assign_color(self.app.nickname)
         connection.nick(self.app.nickname)
-        self.print_error("Nickname in use, trying with " + self.app.nickname)
+        self.print_info(f"Nickname in use, switching to '{self.app.nickname}'")
         self.app.builder.get_object("label_username").set_markup(self.app.get_nick_markup(self.app.nickname))
 
     @idle
