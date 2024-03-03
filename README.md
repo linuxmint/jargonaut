@@ -49,3 +49,6 @@ Under the hood it uses IRC, though it makes no difference from a user point of v
 - Support DND of files (via pastebin) and images (via imgur)
 - Implement spoiler tag
 - Add inxi automation
+- raise awareness that anything prior join isn't seen (i.e. noobs get the impression the room is dead)
+- warn users not to leave if they do shortly after they asked a question
+- don't autoscroll if the scrolledview isn't at the bottom
