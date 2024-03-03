@@ -166,6 +166,10 @@ class IRCApp(Gtk.Application):
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
         )
 
+        # Settings widgets
+        self.bind_entry_widget("nickname", self.builder.get_object("pref_nickname"))
+        self.bind_switch_widget("prefer-dark-mode", self.builder.get_object("pref_dark"), fn_callback=self.update_dark_mode)
+
         self.treeview = self.builder.get_object("treeview_chat")
         self.store = Gtk.ListStore(str, str, str) # nick, message
         self.treeview.set_model(self.store)
@@ -205,8 +209,38 @@ class IRCApp(Gtk.Application):
         self.assign_color(self.nickname)
         self.builder.get_object("label_username").set_markup(self.get_nick_markup(self.nickname))
 
+        self.builder.get_object("channel_stack").connect("notify::visible-child-name", self.on_page_changed)
+
         self.client = IRCClient(self)
         self.connect_to_server()
+
+    def on_page_changed(self, stack, param):
+        if stack.get_visible_child_name() in ["page_questions", "page_discussion"]:
+            self.builder.get_object("entry_box").show_all()
+            GLib.idle_add(self.entry.grab_focus)
+        else:
+            self.builder.get_object("entry_box").set_visible(False)
+
+    def update_dark_mode(self, active):
+        Gtk.Settings.get_default().set_property("gtk-application-prefer-dark-theme", active)
+
+    def bind_entry_widget(self, key, widget, fn_callback=None):
+        widget.set_text(self.settings.get_string(key))
+        widget.connect("changed", self.on_bound_entry_changed, key, fn_callback)
+
+    def bind_switch_widget(self, key, widget, fn_callback=None):
+        widget.set_active(self.settings.get_boolean(key))
+        widget.connect("notify::active", self.on_bound_switch_activated, key, fn_callback)
+
+    def on_bound_entry_changed(self, widget, key, fn_callback=None):
+        self.settings.set_string(key, widget.get_text())
+        if fn_callback is not None:
+            fn_callback(widget.get_active())
+
+    def on_bound_switch_activated(self, widget, active, key, fn_callback=None):
+        self.settings.set_boolean(key, widget.get_active())
+        if fn_callback is not None:
+            fn_callback(widget.get_active())
 
     def assign_color(self, nick):
         if nick not in self.user_colors.keys():
