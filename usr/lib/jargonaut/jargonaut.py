@@ -130,6 +130,14 @@ class IRCClient(irc.client.SimpleIRCClient):
         self.app.show_error_status("dialog-error-symbolic", _("Invalid nickname"), _("Your nickname was rejected. Restart the application to reset it."))
         self.app.settings.set_string("nickname", "")
 
+    def on_disconnect(self, connection, event):
+        print("Disconnected from server: ", event.target)
+        self.app.show_error_status("dialog-error-symbolic", _("Disconnected"), _("You have been disconnected from the server. Please try to reconnect."))
+
+    def on_error(self, connection, event):
+        print("Error from server: ", event.arguments[0])
+        self.app.show_error_status("dialog-error-symbolic", _("Error"), _("An error occurred: ") + event.arguments[0])
+
     def on_nicknameinuse(self, connection, event):
         self.app.nickname =  self.app.get_new_nickname(with_random_suffix=True)
         self.app.assign_color(self.app.nickname)
@@ -261,6 +269,7 @@ class IRCApp(Gtk.Application):
         self.client = IRCClient(self)
         self.connect_to_server()
 
+    @idle
     def show_error_status(self, icon_name, message, details):
         self.builder.get_object("main_stack").set_visible_child_name("page_status")
         self.builder.get_object("status_icon").set_from_icon_name(icon_name, Gtk.IconSize.DIALOG)
@@ -458,19 +467,22 @@ class IRCApp(Gtk.Application):
 
     @_async
     def connect_to_server(self):
-        if self.tls:
-            context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-            context.check_hostname = False
-            context.verify_mode = ssl.CERT_NONE
-            factory = Factory(wrapper=context.wrap_socket)
-            self.client.connect(self.settings.get_string("server"),
-                                self.settings.get_int("port"),
-                                self.nickname, connect_factory=factory)
-        else:
-            self.client.connect(self.settings.get_string("server"),
-                                self.settings.get_int("port"),
-                                self.nickname)
-        self.client.start()
+        try:
+            if self.tls:
+                context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+                context.check_hostname = False
+                context.verify_mode = ssl.CERT_NONE
+                factory = Factory(wrapper=context.wrap_socket)
+                self.client.connect(self.settings.get_string("server"),
+                                    self.settings.get_int("port"),
+                                    self.nickname, connect_factory=factory)
+            else:
+                self.client.connect(self.settings.get_string("server"),
+                                    self.settings.get_int("port"),
+                                    self.nickname)
+            self.client.start()
+        except Exception as e:
+            self.show_error_status("dialog-error-symbolic", _("Error"), str(e))
 
 app = IRCApp()
 app.run()
