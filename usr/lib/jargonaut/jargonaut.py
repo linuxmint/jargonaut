@@ -4,7 +4,7 @@ import gi
 import irc.client
 gi.require_version('Gtk', '3.0')
 gi.require_version('XApp', '1.0')
-from gi.repository import Gtk, Gio, GLib, Gdk, XApp, Pango
+from gi.repository import Gtk, Gio, GLib, Gdk, XApp
 from irc.connection import Factory
 import random
 import threading
@@ -158,11 +158,17 @@ class IRCApp(Gtk.Application):
         self.window.set_application(self)
         self.window.show_all()
 
+        css_provider = Gtk.CssProvider()
+        css_provider.load_from_path("/usr/share/jargonaut/style.css")
+        Gtk.StyleContext.add_provider_for_screen(
+            Gdk.Screen.get_default(),
+            css_provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        )
+
         self.treeview = self.builder.get_object("treeview_chat")
         self.store = Gtk.ListStore(str, str, str) # nick, message
         self.treeview.set_model(self.store)
-        font_desc = Pango.FontDescription("Monospace")
-        self.treeview.modify_font(font_desc)
 
         renderer = Gtk.CellRendererText()
         col = Gtk.TreeViewColumn("", renderer, markup=0)
@@ -181,7 +187,6 @@ class IRCApp(Gtk.Application):
         self.user_treeview = self.builder.get_object("treeview_users")
         self.user_store = Gtk.ListStore(str, str) # nick, raw_nick
         self.user_treeview.set_model(self.user_store)
-        self.user_treeview.modify_font(font_desc)
 
         completion = Gtk.EntryCompletion()
         completion.set_model(self.user_store)
