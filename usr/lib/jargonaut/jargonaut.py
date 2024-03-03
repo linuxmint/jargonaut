@@ -199,6 +199,7 @@ class IRCApp(Gtk.Application):
         self.dark_mode_manager = XApp.DarkModeManager.new(self.settings.get_boolean("prefer-dark-mode"))
 
         self.last_key_press_is_tab = False
+        self.last_message_nick = ""
 
         self.builder = Gtk.Builder()
         self.builder.add_from_file("/usr/share/jargonaut/jargonaut.ui")
@@ -374,7 +375,12 @@ class IRCApp(Gtk.Application):
             self.color_index = (self.color_index + 1) % len(color_palette)
 
     def get_nick_markup(self, nick):
-        color = self.user_colors[nick]
+        if nick == "":
+            color = "grey"
+        elif nick == "*":
+            color = "red"
+        else:
+            color = self.user_colors[nick]
         nick = f"<span foreground='{color}'>{nick}</span>"
         return nick
 
@@ -481,9 +487,21 @@ class IRCApp(Gtk.Application):
         message = re.sub(r'\x1D(.*?)\x1D', r'<i>\1</i>', message)
         message = re.sub(r'\x1F(.*?)\x1F', r'<u>\1</u>', message)
         message = re.sub(r'\x1E(.*?)\x1E', r'<s>\1</s>', message)
-        iter = self.store.append([self.get_nick_markup(nick), message, "|"])
+        sep = "|"
+        nickname = nick
+        words = message.lower().split(" ")
+        if nick == self.nickname:
+            nickname = "*"
+            sep = ">"
+            message = f"<span foreground='grey'>{message}</span>"
+        elif self.nickname in words or (self.nickname+":") in words or ("@"+self.nickname) in words:
+            message = f"<span foreground='green'>{message}</span>"
+        if nick == self.last_message_nick:
+            nickname = ""
+        iter = self.store.append([self.get_nick_markup(nickname), message, sep])
         path = self.store.get_path(iter)
         self.treeview.scroll_to_cell(path, None, False, 0.0, 0.0)
+        self.last_message_nick = nick
 
     @idle
     def update_users(self):
