@@ -125,6 +125,11 @@ class IRCClient(irc.client.SimpleIRCClient):
         message = event.arguments[0]
         self.app.print_message(nick, message)
 
+    def on_erroneusnickname(self, connection, event):
+        print("Invalid nickname", event.arguments[0])
+        self.app.show_error_status("dialog-error-symbolic", _("Invalid nickname"), _("Your nickname was rejected. Restart the application to reset it."))
+        self.app.settings.set_string("nickname", "")
+
     def on_nicknameinuse(self, connection, event):
         self.app.nickname =  self.app.get_new_nickname(with_random_suffix=True)
         self.app.assign_color(self.app.nickname)
@@ -256,6 +261,12 @@ class IRCApp(Gtk.Application):
         self.client = IRCClient(self)
         self.connect_to_server()
 
+    def show_error_status(self, icon_name, message, details):
+        self.builder.get_object("main_stack").set_visible_child_name("page_status")
+        self.builder.get_object("status_icon").set_from_icon_name(icon_name, Gtk.IconSize.DIALOG)
+        self.builder.get_object("status_label").set_text(message)
+        self.builder.get_object("status_details").set_text(details)
+
     def open_about(self, widget):
         dlg = Gtk.AboutDialog()
         dlg.set_transient_for(self.window)
@@ -341,10 +352,11 @@ class IRCApp(Gtk.Application):
         else:
             prefix = getpass.getuser()
         if with_random_suffix:
+            prefix = prefix[:13] # 13 chars max + 3 chars for suffix
             suffix = '{:02x}'.format(random.randint(0, 255))
             return f"{prefix}_{suffix}"
         else:
-            return prefix
+            return prefix[:16] # 16 chars max
 
     def on_key_press_event(self, widget, event):
         keyname = Gdk.keyval_name(event.keyval)

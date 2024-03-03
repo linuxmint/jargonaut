@@ -24,7 +24,7 @@
             <property name="can-focus">False</property>
             <property name="transition-type">crossfade</property>
             <child>
-              <object class="GtkBox" id="page_connect">
+              <object class="GtkBox" id="page_status">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
                 <property name="halign">center</property>
@@ -32,7 +32,7 @@
                 <property name="orientation">vertical</property>
                 <property name="spacing">12</property>
                 <child>
-                  <object class="GtkImage">
+                  <object class="GtkImage" id="status_icon">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="icon-name">network-server-symbolic</property>
@@ -45,7 +45,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkLabel">
+                  <object class="GtkLabel" id="status_label">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="label" translatable="yes">Connecting to the Chat Room...</property>
@@ -57,6 +57,17 @@
                     <property name="expand">False</property>
                     <property name="fill">True</property>
                     <property name="position">1</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="status_details">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">2</property>
                   </packing>
                 </child>
               </object>
@@ -362,6 +373,7 @@
                                     <property name="can-focus">True</property>
                                     <property name="valign">center</property>
                                     <property name="hexpand">True</property>
+                                    <property name="max-width-chars">16</property>
                                   </object>
                                   <packing>
                                     <property name="left-attach">1</property>
@@ -400,7 +412,7 @@
                                     <property name="visible">True</property>
                                     <property name="can-focus">False</property>
                                     <property name="halign">start</property>
-                                    <property name="label" translatable="yes">Note: If your nickname is already taken, a random suffix is appended to it.</property>
+                                    <property name="label" translatable="yes">16 characters max. If already taken, a random suffix is appended.</property>
                                     <property name="wrap">True</property>
                                   </object>
                                   <packing>
