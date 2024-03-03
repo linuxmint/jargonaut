@@ -185,6 +185,7 @@ class IRCApp(Gtk.Application):
             self.window.present()
             return
 
+        self.is_connected = False
         self.user_colors = {}
         self.color_index = 0
 
@@ -453,6 +454,18 @@ class IRCApp(Gtk.Application):
 
     def do_startup(self):
         Gtk.Application.do_startup(self)
+        self.connect("shutdown", self.on_shutdown)
+
+    def on_shutdown(self, application):
+        if self.is_connected:
+            self.disconnect()
+
+    @_async
+    def disconnect(self):
+        try:
+            self.client.connection.disconnect(message="Application closed")
+        except Exception as e:
+            print(e)
 
     @_async
     def send_message(self, message):
@@ -501,6 +514,7 @@ class IRCApp(Gtk.Application):
                 self.client.connect(self.settings.get_string("server"),
                                     self.settings.get_int("port"),
                                     self.nickname)
+            self.is_connected = True
             self.client.start()
         except Exception as e:
             self.show_error_status("dialog-error-symbolic", _("Error"), str(e))
