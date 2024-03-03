@@ -252,6 +252,7 @@ class IRCApp(Gtk.Application):
         self.treeview.set_model(self.store)
 
         renderer = Gtk.CellRendererText()
+        renderer.props.xalign = 1.0
         col = Gtk.TreeViewColumn("", renderer, markup=0)
         col.set_name("first_column")
         self.treeview.append_column(col)
