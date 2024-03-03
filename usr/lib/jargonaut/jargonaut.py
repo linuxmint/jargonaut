@@ -106,6 +106,27 @@ class IRCClient(irc.client.SimpleIRCClient):
     @idle
     def on_nick(self, connection, event):
         self.print_info(f"Nick: target={event.target} source={event.source}")
+        old_nick = event.source.nick
+        new_nick = event.target
+        if old_nick in self.channel_users[self.app.channel]:
+            self.channel_users[self.app.channel].remove(old_nick)
+        if not new_nick in self.channel_users[self.app.channel]:
+            self.channel_users[self.app.channel].append(new_nick)
+        if not new_nick in self.app.user_colors.keys():
+            self.app.assign_color(new_nick)
+        if old_nick == self.app.nickname:
+            self.app.nickname = new_nick
+            self.app.builder.get_object("label_username").set_markup(self.app.get_nick_markup(new_nick))
+        self.app.update_users()
+
+    @idle
+    def on_quit(self, connection, event):
+        self.print_info(f"Quit: target={event.target} source={event.source}")
+        nick = event.source.nick
+        channel = event.target
+        if nick in self.channel_users[self.app.channel]:
+            self.channel_users[self.app.channel].remove(nick)
+            self.app.update_users()
 
     @idle
     def on_part(self, connection, event):
