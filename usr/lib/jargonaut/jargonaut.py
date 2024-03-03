@@ -292,7 +292,10 @@ class IRCApp(Gtk.Application):
     @_async
     def connect_to_server(self):
         if self.tls:
-            factory = Factory(wrapper=ssl.SSLContext(ssl.PROTOCOL_TLS).wrap_socket)
+            context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+            context.check_hostname = False
+            context.verify_mode = ssl.CERT_NONE
+            factory = Factory(wrapper=context.wrap_socket)
             self.client.connect(self.settings.get_string("server"),
                                 self.settings.get_int("port"),
                                 self.nickname, connect_factory=factory)
