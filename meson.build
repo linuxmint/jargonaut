@@ -1,4 +1,4 @@
-project('jargonaut', version: '1.0.0')
+project('jargonaut', version: '1.0.3')
 
 i18n = import('i18n')
 

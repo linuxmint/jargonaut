@@ -1,3 +1,23 @@
+jargonaut (1.0.3) wilma; urgency=medium
+
+  * Add keyboard shortcuts for text formatting
+  * Move default values to gsettings
+  * Add dark mode support
+  * Update README
+  * Fix deprecation warning
+  * Change window subtitle
+  * Center window
+  * Use monospace font
+  * Add missing import
+  * Use a color palette
+  * Disable debug info by default
+  * Don't italicize the username
+  * Use CSS for styling
+  * Add a temporary icon
+  * Fix category and keywords in desktop file
+
+ -- Clement Lefebvre <root@linuxmint.com>  Sun, 03 Mar 2024 11:06:55 +0000
+
 jargonaut (1.0.2) wilma; urgency=medium
 
   * Fix TLS with Python 3.12
