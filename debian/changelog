@@ -1,3 +1,13 @@
+jargonaut (1.0.5) wilma; urgency=medium
+
+  * Handle rejected nicknames
+  * Handle connection errors
+  * Handle nick changes and quit events
+  * Properly disconnect from the server
+  * Update README
+
+ -- Clement Lefebvre <root@linuxmint.com>  Sun, 03 Mar 2024 16:30:18 +0000
+
 jargonaut (1.0.4) wilma; urgency=medium
 
   * Add a fancy style in the headerbar
