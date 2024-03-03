@@ -1,3 +1,12 @@
+jargonaut (1.0.6) wilma; urgency=medium
+
+  * Right align user column
+  * Style messages differently for self, highlights, repeats
+  * Add support for Nickserv password
+  * Update README
+
+ -- Clement Lefebvre <root@linuxmint.com>  Sun, 03 Mar 2024 22:06:17 +0000
+
 jargonaut (1.0.5) wilma; urgency=medium
 
   * Handle rejected nicknames
