@@ -1,10 +1,11 @@
 [Desktop Entry]
 Name=Chat Room
 Comment=A place for users to help each others
+Keywords=irc;help;support;chat;
 Exec=jargonaut
 Icon=jargonaut
 Terminal=false
 Type=Application
 Encoding=UTF-8
-Categories=Application;Utility;
+Categories=GTK;Network;IRCClient;
 StartupNotify=false
