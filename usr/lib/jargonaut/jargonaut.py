@@ -148,6 +148,8 @@ class IRCApp(Gtk.Application):
         self.treeview = self.builder.get_object("treeview_chat")
         self.store = Gtk.ListStore(str, str) # nick, message
         self.treeview.set_model(self.store)
+        font_desc = Pango.FontDescription("Monospace")
+        self.treeview.modify_font(font_desc)
 
         renderer = Gtk.CellRendererText()
         col = Gtk.TreeViewColumn("", renderer, markup=0)
@@ -160,6 +162,7 @@ class IRCApp(Gtk.Application):
         self.user_treeview = self.builder.get_object("treeview_users")
         self.user_store = Gtk.ListStore(str, str) # nick, raw_nick
         self.user_treeview.set_model(self.user_store)
+        self.user_treeview.modify_font(font_desc)
 
         completion = Gtk.EntryCompletion()
         completion.set_model(self.user_store)
