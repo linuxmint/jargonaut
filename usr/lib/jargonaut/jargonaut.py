@@ -13,6 +13,19 @@ import random
 import re
 import ssl
 import gettext
+import locale
+import setproctitle
+
+setproctitle.setproctitle("jargonaut")
+
+# i18n
+APP = "jargonaut"
+LOCALE_DIR = "/usr/share/locale"
+locale.bindtextdomain(APP, LOCALE_DIR)
+gettext.bindtextdomain(APP, LOCALE_DIR)
+gettext.textdomain(APP)
+_ = gettext.gettext
+
 
 color_palette = [
     "#E6194B",  # Rouge
@@ -166,6 +179,35 @@ class IRCApp(Gtk.Application):
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
         )
 
+        # Menubar
+        accel_group = Gtk.AccelGroup()
+        self.window.add_accel_group(accel_group)
+        menu = self.builder.get_object("main_menu")
+        item = Gtk.ImageMenuItem()
+        item.set_image(Gtk.Image.new_from_icon_name("preferences-desktop-keyboard-shortcuts-symbolic", Gtk.IconSize.MENU))
+        item.set_label(_("Keyboard Shortcuts"))
+        item.connect("activate", self.open_keyboard_shortcuts)
+        key, mod = Gtk.accelerator_parse("<Control>K")
+        item.add_accelerator("activate", accel_group, key, mod, Gtk.AccelFlags.VISIBLE)
+        menu.append(item)
+        item = Gtk.ImageMenuItem()
+        item.set_image(Gtk.Image.new_from_icon_name("help-about-symbolic", Gtk.IconSize.MENU))
+        item.set_label(_("About"))
+        item.connect("activate", self.open_about)
+        key, mod = Gtk.accelerator_parse("F1")
+        item.add_accelerator("activate", accel_group, key, mod, Gtk.AccelFlags.VISIBLE)
+        menu.append(item)
+        item = Gtk.ImageMenuItem(label=_("Quit"))
+        image = Gtk.Image.new_from_icon_name("application-exit-symbolic", Gtk.IconSize.MENU)
+        item.set_image(image)
+        item.connect("activate", self.on_menu_quit)
+        key, mod = Gtk.accelerator_parse("<Control>Q")
+        item.add_accelerator("activate", accel_group, key, mod, Gtk.AccelFlags.VISIBLE)
+        key, mod = Gtk.accelerator_parse("<Control>W")
+        item.add_accelerator("activate", accel_group, key, mod, Gtk.AccelFlags.VISIBLE)
+        menu.append(item)
+        menu.show_all()
+
         # Settings widgets
         self.bind_entry_widget("nickname", self.builder.get_object("pref_nickname"))
         self.bind_switch_widget("prefer-dark-mode", self.builder.get_object("pref_dark"), fn_callback=self.update_dark_mode)
@@ -213,6 +255,47 @@ class IRCApp(Gtk.Application):
 
         self.client = IRCClient(self)
         self.connect_to_server()
+
+    def open_about(self, widget):
+        dlg = Gtk.AboutDialog()
+        dlg.set_transient_for(self.window)
+        dlg.set_title(_("About"))
+        dlg.set_program_name("Jargonaut")
+        dlg.set_comments(_("Chat Room"))
+        try:
+            h = open("/usr/share/common-licenses/GPL", encoding="utf-8")
+            s = h.readlines()
+            gpl = ""
+            for line in s:
+                gpl += line
+            h.close()
+            dlg.set_license(gpl)
+        except Exception as e:
+            print(e)
+
+        dlg.set_version("__DEB_VERSION__")
+        dlg.set_icon_name("jargonaut")
+        dlg.set_logo_icon_name("jargonaut")
+        dlg.set_website("https://www.github.com/linuxmint/jargonaut")
+
+        def close(w, res):
+            if res == Gtk.ResponseType.CANCEL or res == Gtk.ResponseType.DELETE_EVENT:
+                w.destroy()
+
+        dlg.connect("response", close)
+        dlg.show()
+
+    def open_keyboard_shortcuts(self, widget):
+        gladefile = "/usr/share/jargonaut/shortcuts.ui"
+        builder = Gtk.Builder()
+        builder.set_translation_domain(APP)
+        builder.add_from_file(gladefile)
+        window = builder.get_object("shortcuts")
+        window.set_title(_("Chat Room"))
+        window.show()
+
+    def on_menu_quit(self, widget):
+        self.quit()
 
     def on_page_changed(self, stack, param):
         if stack.get_visible_child_name() in ["page_questions", "page_discussion"]:
