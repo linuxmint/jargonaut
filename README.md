@@ -14,12 +14,10 @@ Under the hood it uses IRC, though it makes no difference from a user point of v
 - Add timestamps
 - Make links clickable
 - wordwrap
-- Sup in nickname makes things harder to read
 - Put lines closer to one-another
 
 ## Other
 
-- Don't correlate unique suffix and color, use pre-determined colors which work well, based on who is read in which order (i.e. people will have different colors on different client instances, but that's ok)
 - Connect to multiple channels
 
 # Todo 2.0
@@ -27,13 +25,12 @@ Under the hood it uses IRC, though it makes no difference from a user point of v
 ## Localization
 
 - Check i18n
-- add keywords in the desktop file
 - Set up translations
 
 ## UI/Settings
 
 - Add an error page
-- Design an icon
+- Design a better icon
 - Add a settings page
 - decouple default settings from mint values
 
