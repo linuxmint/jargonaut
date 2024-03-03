@@ -29,9 +29,7 @@ Under the hood it uses IRC, though it makes no difference from a user point of v
 
 ## UI/Settings
 
-- Add an error page
 - Design a better icon
-- Add a settings page
 - decouple default settings from mint values
 
 ## Rendering
@@ -49,3 +47,5 @@ Under the hood it uses IRC, though it makes no difference from a user point of v
 - Filter unwanted words
 - Support DND of files (via pastebin) and images (via imgur)
 - Implement spoiler tag
+- Support password/nickserv authentication
+- Add inxi automation
