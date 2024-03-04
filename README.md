@@ -52,3 +52,6 @@ Under the hood it uses IRC, though it makes no difference from a user point of v
 - raise awareness that anything prior join isn't seen (i.e. noobs get the impression the room is dead)
 - warn users not to leave if they do shortly after they asked a question
 - don't autoscroll if the scrolledview isn't at the bottom
+- spell check
+- show nick changes
+- show people who left if user interacted with them or if they spoke recently
