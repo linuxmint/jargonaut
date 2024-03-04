@@ -178,7 +178,7 @@ class IRCClient(irc.client.SimpleIRCClient):
     def print_info(self, message):
         print("Info: " + message)
 
-class IRCApp(Gtk.Application):
+class App(Gtk.Application):
     def __init__(self):
         super().__init__(application_id="org.x.jargonaut")
         self.window = None
@@ -546,5 +546,5 @@ class IRCApp(Gtk.Application):
         except Exception as e:
             self.show_error_status("dialog-error-symbolic", _("Error"), str(e))
 
-app = IRCApp()
+app = App()
 app.run()
