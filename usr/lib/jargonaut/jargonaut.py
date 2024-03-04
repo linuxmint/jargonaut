@@ -482,7 +482,7 @@ class IRCApp(Gtk.Application):
     @_async
     def disconnect(self):
         try:
-            self.client.connection.disconnect(message="Application closed")
+            self.client.connection.disconnect(message=_("Jargonaut signing out!"))
         except Exception as e:
             print(e)
 
