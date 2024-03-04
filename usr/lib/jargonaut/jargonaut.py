@@ -15,7 +15,7 @@ import ssl
 import gettext
 import locale
 import setproctitle
-
+from settings import bind_entry_widget, bind_switch_widget
 setproctitle.setproctitle("jargonaut")
 
 # i18n
@@ -63,121 +63,6 @@ def idle(func):
         GLib.idle_add(func, *args)
     return wrapper
 
-class IRCClient(irc.client.SimpleIRCClient):
-    def __init__(self, app):
-        irc.client.SimpleIRCClient.__init__(self)
-        self.app = app
-        self.channel_users = {}
-        self.channel_users[self.app.channel] = []
-
-    def on_welcome(self, connection, event):
-        connection.join(self.app.channel)
-        connection.names([self.app.channel])
-
-    @idle
-    def on_join(self, connection, event):
-        self.print_info(f"Joined channel: target={event.target} source={event.source}")
-        self.app.builder.get_object("main_stack").set_visible_child_name("page_chat")
-        nick = event.source.nick
-        channel = event.target
-        if nick not in self.channel_users[channel]:
-            self.app.assign_color(nick)
-            self.channel_users[channel].append(nick)
-            self.app.update_users()
-        if nick == self.app.nickname:
-            self.identify()
-
-    @_async
-    def identify(self):
-        username = self.app.settings.get_string("nickname")
-        password = self.app.settings.get_string("password")
-        if password != "":
-            print("Identifying...")
-            self.connection.privmsg("Nickserv", f"IDENTIFY {username} {password}")
-
-    def on_namreply(self, connection, event):
-        channel = event.arguments[1]
-        users = event.arguments[2].split()
-        for user in users:
-            for character in ["~", "&", "@", "%", "+"]:
-                if user.startswith(character):
-                    user = user[1:]
-                    break
-            self.app.assign_color(user)
-            if not user in self.channel_users[channel]:
-                self.channel_users[channel].append(user)
-        self.app.update_users()
-
-    def on_notice(self, connection, event):
-        self.print_info("Notice: " + event.source + " " + event.arguments[0])
-
-    @idle
-    def on_nick(self, connection, event):
-        self.print_info(f"Nick: target={event.target} source={event.source}")
-        old_nick = event.source.nick
-        new_nick = event.target
-        if old_nick in self.channel_users[self.app.channel]:
-            self.channel_users[self.app.channel].remove(old_nick)
-        if not new_nick in self.channel_users[self.app.channel]:
-            self.channel_users[self.app.channel].append(new_nick)
-        if not new_nick in self.app.user_colors.keys():
-            self.app.assign_color(new_nick)
-        if old_nick == self.app.nickname:
-            self.app.nickname = new_nick
-            self.app.builder.get_object("label_username").set_markup(self.app.get_nick_markup(new_nick))
-        self.app.update_users()
-
-    @idle
-    def on_quit(self, connection, event):
-        self.print_info(f"Quit: target={event.target} source={event.source}")
-        nick = event.source.nick
-        channel = event.target
-        if nick in self.channel_users[self.app.channel]:
-            self.channel_users[self.app.channel].remove(nick)
-            self.app.update_users()
-
-    @idle
-    def on_part(self, connection, event):
-        self.print_info(f"Part: target={event.target} source={event.source}")
-        nick = event.source.nick
-        channel = event.target
-        if nick in self.channel_users[channel]:
-            self.channel_users[channel].remove(nick)
-            self.app.update_users()
-
-    def on_all_raw_messages(self, connection, event):
-        if self.app.settings.get_boolean("debug"):
-            self.print_info("Raw message: " + str(event.arguments))
-
-    def on_pubmsg(self, connection, event):
-        nick = event.source.split('!')[0]
-        message = event.arguments[0]
-        self.app.print_message(nick, message)
-
-    def on_erroneusnickname(self, connection, event):
-        self.print_info("Invalid nickname", event.arguments[0])
-        self.app.show_error_status("dialog-error-symbolic", _("Invalid nickname"), _("Your nickname was rejected. Restart the application to reset it."))
-        self.app.settings.set_string("nickname", "")
-
-    def on_disconnect(self, connection, event):
-        self.print_info("Disconnected from server: ", event.target)
-        self.app.show_error_status("dialog-error-symbolic", _("Disconnected"), _("You have been disconnected from the server. Please try to reconnect."))
-
-    def on_error(self, connection, event):
-        self.print_info("Error from server: ", event.arguments[0])
-        self.app.show_error_status("dialog-error-symbolic", _("Error"), _("An error occurred: ") + event.arguments[0])
-
-    def on_nicknameinuse(self, connection, event):
-        self.app.nickname =  self.app.get_new_nickname(with_random_suffix=True)
-        self.app.assign_color(self.app.nickname)
-        connection.nick(self.app.nickname)
-        self.print_info(f"Nickname in use, switching to '{self.app.nickname}'")
-        self.app.builder.get_object("label_username").set_markup(self.app.get_nick_markup(self.app.nickname))
-
-    @idle
-    def print_info(self, message):
-        print("Info: " + message)
-
 class App(Gtk.Application):
     def __init__(self):
         super().__init__(application_id="org.x.jargonaut")
@@ -199,6 +84,10 @@ class App(Gtk.Application):
         self.port = self.settings.get_int("port")
         self.tls = self.settings.get_boolean("tls-connection")
         self.nickname = self.get_new_nickname()
+
+        self.channel_users = {}
+        self.channel_users[self.channel] = []
+
 
         self.dark_mode_manager = XApp.DarkModeManager.new(self.settings.get_boolean("prefer-dark-mode"))
 
@@ -249,9 +138,9 @@ class App(Gtk.Application):
         menu.show_all()
 
         # Settings widgets
-        self.bind_entry_widget("nickname", self.builder.get_object("pref_nickname"))
-        self.bind_entry_widget("password", self.builder.get_object("pref_password"))
-        self.bind_switch_widget("prefer-dark-mode", self.builder.get_object("pref_dark"), fn_callback=self.update_dark_mode)
+        bind_entry_widget(self.builder.get_object("pref_nickname"), self.settings, "nickname")
+        bind_entry_widget(self.builder.get_object("pref_password"), self.settings, "password")
+        bind_switch_widget(self.builder.get_object("pref_dark"), self.settings, "prefer-dark-mode", fn_callback=self.update_dark_mode)
 
         self.treeview = self.builder.get_object("treeview_chat")
         self.store = Gtk.ListStore(str, str, str) # nick, message
@@ -296,8 +185,245 @@ class App(Gtk.Application):
 
         self.builder.get_object("channel_stack").connect("notify::visible-child-name", self.on_page_changed)
 
-        self.client = IRCClient(self)
+        self.client = irc.client.SimpleIRCClient()
+        self.client.connection.add_global_handler("welcome", self.on_welcome)
+        self.client.connection.add_global_handler("join", self.on_join)
+        self.client.connection.add_global_handler("namreply", self.on_namreply)
+        self.client.connection.add_global_handler("notice", self.on_notice)
+        self.client.connection.add_global_handler("nick", self.on_nick)
+        self.client.connection.add_global_handler("quit", self.on_quit)
+        self.client.connection.add_global_handler("part", self.on_part)
+        self.client.connection.add_global_handler("all_raw_messages", self.on_all_raw_messages)
+        self.client.connection.add_global_handler("pubmsg", self.on_pubmsg)
+        self.client.connection.add_global_handler("erroneusnickname", self.on_erroneusnickname)
+        self.client.connection.add_global_handler("disconnect", self.on_disconnect)
+        self.client.connection.add_global_handler("error", self.on_error)
+        self.client.connection.add_global_handler("nicknameinuse", self.on_nicknameinuse)
         self.connect_to_server()
+
+#########################
+# Nickname/user functions
+#########################
+
+    def assign_color(self, nick):
+        if nick not in self.user_colors.keys():
+            color = color_palette[self.color_index]
+            print(f"Assigning color {color} to {nick}")
+            self.user_colors[nick] = color
+            self.color_index = (self.color_index + 1) % len(color_palette)
+
+    def get_nick_markup(self, nick):
+        if nick == "":
+            color = "grey"
+        elif nick == "*":
+            color = "red"
+        else:
+            color = self.user_colors[nick]
+        nick = f"<span foreground='{color}'>{nick}</span>"
+        return nick
+
+    def get_new_nickname(self, with_random_suffix=False):
+        if self.settings.get_string("nickname") != "":
+            prefix = self.settings.get_string("nickname")
+        else:
+            prefix = getpass.getuser()
+        if with_random_suffix:
+            prefix = prefix[:13] # 13 chars max + 3 chars for suffix
+            suffix = '{:02x}'.format(random.randint(0, 255))
+            return f"{prefix}_{suffix}"
+        else:
+            return prefix[:16] # 16 chars max
+
+#####################
+# IRC commands
+#####################
+
+    @_async
+    def connect_to_server(self):
+        try:
+            if self.tls:
+                context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+                context.check_hostname = False
+                context.verify_mode = ssl.CERT_NONE
+                factory = Factory(wrapper=context.wrap_socket)
+                self.client.connect(self.settings.get_string("server"),
+                                    self.settings.get_int("port"),
+                                    self.nickname, connect_factory=factory)
+            else:
+                self.client.connect(self.settings.get_string("server"),
+                                    self.settings.get_int("port"),
+                                    self.nickname)
+            self.is_connected = True
+            self.client.start()
+        except Exception as e:
+            self.show_error_status("dialog-error-symbolic", _("Error"), str(e))
+
+    @_async
+    def join_channels(self, connection):
+        connection.join(self.channel)
+        connection.names([self.channel])
+
+    @_async
+    def identify(self, connection):
+        username = self.settings.get_string("nickname")
+        password = self.settings.get_string("password")
+        if password != "":
+            self.print_info("Identifying...")
+            connection.privmsg("Nickserv", f"IDENTIFY {username} {password}")
+
+    @_async
+    def send_message(self, message):
+        message = message.replace('\x16', '\x1D')
+        self.client.connection.privmsg(self.channel, message)
+
+    @_async
+    def disconnect(self):
+        try:
+            self.client.connection.disconnect(message=_("Jargonaut signing out!"))
+        except Exception as e:
+            print(e)
+
+#####################
+# IRC signal handlers
+#####################
+
+    def on_welcome(self, connection, event):
+        self.join_channels(connection)
+
+    def on_join(self, connection, event):
+        self.print_info(f"Joined channel: target={event.target} source={event.source}")
+        self.builder.get_object("main_stack").set_visible_child_name("page_chat")
+        nick = event.source.nick
+        channel = event.target
+        if nick not in self.channel_users[channel]:
+            self.assign_color(nick)
+            self.channel_users[channel].append(nick)
+            self.update_users()
+        if nick == self.nickname:
+            self.identify(connection)
+
+    def on_namreply(self, connection, event):
+        channel = event.arguments[1]
+        users = event.arguments[2].split()
+        for user in users:
+            for character in ["~", "&", "@", "%", "+"]:
+                if user.startswith(character):
+                    user = user[1:]
+                    break
+            self.assign_color(user)
+            if not user in self.channel_users[channel]:
+                self.channel_users[channel].append(user)
+        self.update_users()
+
+    def on_notice(self, connection, event):
+        self.print_info("Notice: " + event.source + " " + event.arguments[0])
+
+    def on_nick(self, connection, event):
+        self.print_info(f"Nick: target={event.target} source={event.source}")
+        old_nick = event.source.nick
+        new_nick = event.target
+        if old_nick in self.channel_users[self.channel]:
+            self.channel_users[self.channel].remove(old_nick)
+        if not new_nick in self.channel_users[self.channel]:
+            self.channel_users[self.channel].append(new_nick)
+        if not new_nick in self.user_colors.keys():
+            self.assign_color(new_nick)
+        if old_nick == self.nickname:
+            self.nickname = new_nick
+            self.builder.get_object("label_username").set_markup(self.get_nick_markup(new_nick))
+        self.update_users()
+
+    def on_quit(self, connection, event):
+        self.print_info(f"Quit: target={event.target} source={event.source}")
+        nick = event.source.nick
+        channel = event.target
+        if nick in self.channel_users[self.channel]:
+            self.channel_users[self.channel].remove(nick)
+            self.update_users()
+
+    def on_part(self, connection, event):
+        self.print_info(f"Part: target={event.target} source={event.source}")
+        nick = event.source.nick
+        channel = event.target
+        if nick in self.channel_users[channel]:
+            self.channel_users[channel].remove(nick)
+            self.update_users()
+
+    def on_all_raw_messages(self, connection, event):
+        if self.settings.get_boolean("debug"):
+            self.print_info("Raw message: " + str(event.arguments))
+
+    def on_pubmsg(self, connection, event):
+        nick = event.source.split('!')[0]
+        message = event.arguments[0]
+        self.print_message(nick, message)
+
+    def on_erroneusnickname(self, connection, event):
+        self.print_info("Invalid nickname", event.arguments[0])
+        self.show_error_status("dialog-error-symbolic", _("Invalid nickname"), _("Your nickname was rejected. Restart the application to reset it."))
+        self.settings.set_string("nickname", "")
+
+    def on_disconnect(self, connection, event):
+        self.print_info("Disconnected from server: ", event.target)
+        self.show_error_status("dialog-error-symbolic", _("Disconnected"), _("You have been disconnected from the server. Please try to reconnect."))
+
+    def on_error(self, connection, event):
+        self.print_info("Error from server: ", event.arguments[0])
+        self.show_error_status("dialog-error-symbolic", _("Error"), _("An error occurred: ") + event.arguments[0])
+
+    def on_nicknameinuse(self, connection, event):
+        self.nickname =  self.get_new_nickname(with_random_suffix=True)
+        self.assign_color(self.nickname)
+        connection.nick(self.nickname)
+        self.print_info(f"Nickname in use, switching to '{self.nickname}'")
+        self.builder.get_object("label_username").set_markup(self.get_nick_markup(self.nickname))
+
+##################
+# UI IRC functions
+##################
+
+    @idle
+    def print_message(self, nick, message):
+        # Format text (IRC codes -> pango)
+        message = re.sub(r'\x02(.*?)\x02', r'<b>\1</b>', message)
+        message = re.sub(r'\x16(.*?)\x16', r'<i>\1</i>', message)
+        message = re.sub(r'\x1D(.*?)\x1D', r'<i>\1</i>', message)
+        message = re.sub(r'\x1F(.*?)\x1F', r'<u>\1</u>', message)
+        message = re.sub(r'\x1E(.*?)\x1E', r'<s>\1</s>', message)
+        sep = "|"
+        nickname = nick
+        words = message.lower().split(" ")
+        if nick == self.nickname:
+            nickname = "*"
+            sep = ">"
+            message = f"<span foreground='grey'>{message}</span>"
+        elif self.nickname.lower() in words or (self.nickname+":").lower() in words or ("@"+self.nickname).lower() in words:
+            message = f"<span foreground='red'>{message}</span>"
+        if nick == self.last_message_nick:
+            nickname = ""
+        iter = self.store.append([self.get_nick_markup(nickname), message, sep])
+        path = self.store.get_path(iter)
+        self.treeview.scroll_to_cell(path, None, False, 0.0, 0.0)
+        self.last_message_nick = nick
+
+    @idle
+    def update_users(self):
+        self.user_store.clear()
+        users = self.channel_users[self.channel]
+        box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=5)
+        icon = Gtk.Image.new_from_icon_name("system-users-symbolic", Gtk.IconSize.MENU)
+        box.pack_start(icon, True, True, 0)
+        box.pack_start(Gtk.Label(label=len(users)), True, True, 0)
+        column = self.user_treeview.get_column(0)
+        column.set_widget(box)
+        column.set_alignment(0.5)
+        box.show_all()
+        for user in users:
+            self.user_store.append([self.get_nick_markup(user), user])
+
+    @idle
+    def print_info(self, message):
+        print("Info: " + message)
 
     @idle
     def show_error_status(self, icon_name, message, details):
@@ -305,6 +431,10 @@ class App(Gtk.Application):
         self.builder.get_object("status_icon").set_from_icon_name(icon_name, Gtk.IconSize.DIALOG)
         self.builder.get_object("status_label").set_text(message)
         self.builder.get_object("status_details").set_text(details)
+
+###############
+# App functions
+###############
 
     def open_about(self, widget):
         dlg = Gtk.AboutDialog()
@@ -354,55 +484,9 @@ class App(Gtk.Application):
         else:
             self.builder.get_object("entry_box").set_visible(False)
 
+    @idle
     def update_dark_mode(self, active):
         Gtk.Settings.get_default().set_property("gtk-application-prefer-dark-theme", active)
-
-    def bind_entry_widget(self, key, widget, fn_callback=None):
-        widget.set_text(self.settings.get_string(key))
-        widget.connect("changed", self.on_bound_entry_changed, key, fn_callback)
-
-    def bind_switch_widget(self, key, widget, fn_callback=None):
-        widget.set_active(self.settings.get_boolean(key))
-        widget.connect("notify::active", self.on_bound_switch_activated, key, fn_callback)
-
-    def on_bound_entry_changed(self, widget, key, fn_callback=None):
-        self.settings.set_string(key, widget.get_text())
-        if fn_callback is not None:
-            fn_callback(widget.get_active())
-
-    def on_bound_switch_activated(self, widget, active, key, fn_callback=None):
-        self.settings.set_boolean(key, widget.get_active())
-        if fn_callback is not None:
-            fn_callback(widget.get_active())
-
-    def assign_color(self, nick):
-        if nick not in self.user_colors.keys():
-            color = color_palette[self.color_index]
-            print(f"Assigning color {color} to {nick}")
-            self.user_colors[nick] = color
-            self.color_index = (self.color_index + 1) % len(color_palette)
-
-    def get_nick_markup(self, nick):
-        if nick == "":
-            color = "grey"
-        elif nick == "*":
-            color = "red"
-        else:
-            color = self.user_colors[nick]
-        nick = f"<span foreground='{color}'>{nick}</span>"
-        return nick
-
-    def get_new_nickname(self, with_random_suffix=False):
-        if self.settings.get_string("nickname") != "":
-            prefix = self.settings.get_string("nickname")
-        else:
-            prefix = getpass.getuser()
-        if with_random_suffix:
-            prefix = prefix[:13] # 13 chars max + 3 chars for suffix
-            suffix = '{:02x}'.format(random.randint(0, 255))
-            return f"{prefix}_{suffix}"
-        else:
-            return prefix[:16] # 16 chars max
 
     def on_key_press_event(self, widget, event):
         keyname = Gdk.keyval_name(event.keyval)
@@ -474,77 +558,6 @@ class App(Gtk.Application):
     def on_shutdown(self, application):
         if self.is_connected:
             self.disconnect()
-
-    @_async
-    def disconnect(self):
-        try:
-            self.client.connection.disconnect(message=_("Jargonaut signing out!"))
-        except Exception as e:
-            print(e)
-
-    @_async
-    def send_message(self, message):
-        message = message.replace('\x16', '\x1D')
-        self.client.connection.privmsg(self.channel, message)
-
-    @idle
-    def print_message(self, nick, message):
-        # Format text (IRC codes -> pango)
-        message = re.sub(r'\x02(.*?)\x02', r'<b>\1</b>', message)
-        message = re.sub(r'\x16(.*?)\x16', r'<i>\1</i>', message)
-        message = re.sub(r'\x1D(.*?)\x1D', r'<i>\1</i>', message)
-        message = re.sub(r'\x1F(.*?)\x1F', r'<u>\1</u>', message)
-        message = re.sub(r'\x1E(.*?)\x1E', r'<s>\1</s>', message)
-        sep = "|"
-        nickname = nick
-        words = message.lower().split(" ")
-        if nick == self.nickname:
-            nickname = "*"
-            sep = ">"
-            message = f"<span foreground='grey'>{message}</span>"
-        elif self.nickname.lower() in words or (self.nickname+":").lower() in words or ("@"+self.nickname).lower() in words:
-            message = f"<span foreground='red'>{message}</span>"
-        if nick == self.last_message_nick:
-            nickname = ""
-        iter = self.store.append([self.get_nick_markup(nickname), message, sep])
-        path = self.store.get_path(iter)
-        self.treeview.scroll_to_cell(path, None, False, 0.0, 0.0)
-        self.last_message_nick = nick
-
-    @idle
-    def update_users(self):
-        self.user_store.clear()
-        users = self.client.channel_users[self.channel]
-        box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=5)
-        icon = Gtk.Image.new_from_icon_name("system-users-symbolic", Gtk.IconSize.MENU)
-        box.pack_start(icon, True, True, 0)
-        box.pack_start(Gtk.Label(label=len(users)), True, True, 0)
-        column = self.user_treeview.get_column(0)
-        column.set_widget(box)
-        column.set_alignment(0.5)
-        box.show_all()
-        for user in users:
-            self.user_store.append([self.get_nick_markup(user), user])
-
-    @_async
-    def connect_to_server(self):
-        try:
-            if self.tls:
-                context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-                context.check_hostname = False
-                context.verify_mode = ssl.CERT_NONE
-                factory = Factory(wrapper=context.wrap_socket)
-                self.client.connect(self.settings.get_string("server"),
-                                    self.settings.get_int("port"),
-                                    self.nickname, connect_factory=factory)
-            else:
-                self.client.connect(self.settings.get_string("server"),
-                                    self.settings.get_int("port"),
-                                    self.nickname)
-            self.is_connected = True
-            self.client.start()
-        except Exception as e:
-            self.show_error_status("dialog-error-symbolic", _("Error"), str(e))
 
 app = App()
 app.run()
