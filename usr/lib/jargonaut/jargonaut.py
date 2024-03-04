@@ -68,6 +68,7 @@ class IRCClient(irc.client.SimpleIRCClient):
         irc.client.SimpleIRCClient.__init__(self)
         self.app = app
         self.channel_users = {}
+        self.channel_users[self.app.channel] = []
 
     def on_welcome(self, connection, event):
         connection.join(self.app.channel)
@@ -97,15 +98,14 @@ class IRCClient(irc.client.SimpleIRCClient):
     def on_namreply(self, connection, event):
         channel = event.arguments[1]
         users = event.arguments[2].split()
-        clean_users = []
         for user in users:
             for character in ["~", "&", "@", "%", "+"]:
                 if user.startswith(character):
                     user = user[1:]
                     break
-            clean_users.append(user)
             self.app.assign_color(user)
-        self.channel_users[channel] = clean_users
+            if not user in self.channel_users[channel]:
+                self.channel_users[channel].append(user)
         self.app.update_users()
 
     def on_notice(self, connection, event):
