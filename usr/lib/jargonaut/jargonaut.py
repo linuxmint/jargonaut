@@ -155,16 +155,16 @@ class IRCClient(irc.client.SimpleIRCClient):
         self.app.print_message(nick, message)
 
     def on_erroneusnickname(self, connection, event):
-        print("Invalid nickname", event.arguments[0])
+        self.print_info("Invalid nickname", event.arguments[0])
         self.app.show_error_status("dialog-error-symbolic", _("Invalid nickname"), _("Your nickname was rejected. Restart the application to reset it."))
         self.app.settings.set_string("nickname", "")
 
     def on_disconnect(self, connection, event):
-        print("Disconnected from server: ", event.target)
+        self.print_info("Disconnected from server: ", event.target)
         self.app.show_error_status("dialog-error-symbolic", _("Disconnected"), _("You have been disconnected from the server. Please try to reconnect."))
 
     def on_error(self, connection, event):
-        print("Error from server: ", event.arguments[0])
+        self.print_info("Error from server: ", event.arguments[0])
         self.app.show_error_status("dialog-error-symbolic", _("Error"), _("An error occurred: ") + event.arguments[0])
 
     def on_nicknameinuse(self, connection, event):
@@ -173,10 +173,6 @@ class IRCClient(irc.client.SimpleIRCClient):
         connection.nick(self.app.nickname)
         self.print_info(f"Nickname in use, switching to '{self.app.nickname}'")
         self.app.builder.get_object("label_username").set_markup(self.app.get_nick_markup(self.app.nickname))
-
-    @idle
-    def print_error(self, message):
-        print("Error: " + message)
 
     @idle
     def print_info(self, message):
