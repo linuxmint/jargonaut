@@ -55,3 +55,5 @@ Under the hood it uses IRC, though it makes no difference from a user point of v
 - spell check
 - show nick changes
 - show people who left if user interacted with them or if they spoke recently
+- detect all caps message and suppress them
+- Show what happened before join(), via a logger/bot?
