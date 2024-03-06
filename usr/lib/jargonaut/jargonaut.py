@@ -233,9 +233,11 @@ class App(Gtk.Application):
 # IRC signal handlers
 #####################
 
+    @idle
     def on_welcome(self, connection, event):
         self.join_channels(connection)
 
+    @idle
     def on_join(self, connection, event):
         self.print_info(f"Joined channel: target={event.target} source={event.source}")
         self.builder.get_object("main_stack").set_visible_child_name("page_chat")
@@ -248,6 +250,7 @@ class App(Gtk.Application):
         if nick == self.nickname:
             self.identify(connection)
 
+    @idle
     def on_namreply(self, connection, event):
         channel = event.arguments[1]
         users = event.arguments[2].split()
@@ -261,9 +264,11 @@ class App(Gtk.Application):
                 self.channel_users[channel].append(user)
         self.update_users()
 
+    @idle
     def on_notice(self, connection, event):
         self.print_info("Notice: " + event.source + " " + event.arguments[0])
 
+    @idle
     def on_nick(self, connection, event):
         self.print_info(f"Nick: target={event.target} source={event.source}")
         old_nick = event.source.nick
@@ -279,6 +284,7 @@ class App(Gtk.Application):
             self.builder.get_object("label_username").set_markup(self.get_nick_markup(new_nick))
         self.update_users()
 
+    @idle
     def on_quit(self, connection, event):
         self.print_info(f"Quit: target={event.target} source={event.source}")
         nick = event.source.nick
@@ -287,6 +293,7 @@ class App(Gtk.Application):
             self.channel_users[self.channel].remove(nick)
             self.update_users()
 
+    @idle
     def on_part(self, connection, event):
         self.print_info(f"Part: target={event.target} source={event.source}")
         nick = event.source.nick
@@ -295,28 +302,34 @@ class App(Gtk.Application):
             self.channel_users[channel].remove(nick)
             self.update_users()
 
+    @idle
     def on_all_raw_messages(self, connection, event):
         if self.settings.get_boolean("debug"):
             self.print_info("Raw message: " + str(event.arguments))
 
+    @idle
     def on_pubmsg(self, connection, event):
         nick = event.source.split('!')[0]
         message = event.arguments[0]
         self.print_message(nick, message)
 
+    @idle
     def on_erroneusnickname(self, connection, event):
         self.print_info("Invalid nickname", event.arguments[0])
         self.show_error_status("dialog-error-symbolic", _("Invalid nickname"), _("Your nickname was rejected. Restart the application to reset it."))
         self.settings.set_string("nickname", "")
 
+    @idle
     def on_disconnect(self, connection, event):
         self.print_info("Disconnected from server: ", event.target)
         self.show_error_status("dialog-error-symbolic", _("Disconnected"), _("You have been disconnected from the server. Please try to reconnect."))
 
+    @idle
     def on_error(self, connection, event):
         self.print_info("Error from server: ", event.arguments[0])
         self.show_error_status("dialog-error-symbolic", _("Error"), _("An error occurred: ") + event.arguments[0])
 
+    @idle
     def on_nicknameinuse(self, connection, event):
         self.nickname =  self.get_new_nickname(with_random_suffix=True)
         self.assign_color(self.nickname)
