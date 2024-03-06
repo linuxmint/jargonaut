@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="webview.css">
+</head>
+<body>
+
+	<table class="chattable">
+		<tr class="mine" valign="top">
+			<td class="nick">*</td>
+			<td class="sep">></td>
+			<td class="msg">blah</td>
+		</tr>
+		<tr class="mine" valign="top">
+			<td class="nick"></td>
+			<td class="sep">></td>
+			<td class="msg">blah</td>
+		</tr>
+		<tr class="response" valign="top">
+			<td align="right"><span class="nick"><font color=blue>joe</font></span></td>
+			<td><span class="sep">|</span></td>
+			<td><div class="messages">
+					<div class="msg">me: blah?<br/></div>
+				</div>
+			</td>
+		</tr>
+		<tr class="theirs" valign="top">
+			<td align="right"><span class="nick"><font color=brown>bill22</font></span></td>
+			<td><span class="sep">|</span></td>
+			<td><div class="messages">
+					<div class="msg">yeah, actually.. blah<br/></div>
+				</div>
+			</td>
+		</tr>
+		<tr class="mine" valign="top">
+			<td align="right"><span class="nick">*</span></td>
+			<td><span class="sep">></span></td>
+			<td><div class="messages">
+					<div class="msg">ah ok.<br/></div>
+				</div>
+			</td>
+		</tr>
+	</table>
+</body>
+<script>
+window.scrollTo(0, document.body.scrollHeight);
+</script>
+</html>

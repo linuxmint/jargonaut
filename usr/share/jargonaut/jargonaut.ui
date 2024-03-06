@@ -158,7 +158,7 @@
                           </object>
                           <packing>
                             <property name="name">page_questions</property>
-                            <property name="title" translatable="yes">Questions</property>
+                            <property name="title" translatable="yes">Questions (treeview)</property>
                             <property name="icon-name">jargonaut-channel-help</property>
                           </packing>
                         </child>
@@ -167,53 +167,12 @@
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
                             <child>
-                              <object class="GtkScrolledWindow">
-                                <property name="visible">True</property>
-                                <property name="can-focus">True</property>
-                                <property name="shadow-type">in</property>
-                                <child>
-                                  <object class="GtkTreeView" id="treeview_chat1">
-                                    <property name="visible">True</property>
-                                    <property name="can-focus">True</property>
-                                    <property name="headers-visible">False</property>
-                                    <child internal-child="selection">
-                                      <object class="GtkTreeSelection"/>
-                                    </child>
-                                  </object>
-                                </child>
-                              </object>
-                              <packing>
-                                <property name="expand">True</property>
-                                <property name="fill">True</property>
-                                <property name="position">0</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkScrolledWindow">
-                                <property name="visible">True</property>
-                                <property name="can-focus">True</property>
-                                <property name="shadow-type">in</property>
-                                <property name="min-content-width">150</property>
-                                <child>
-                                  <object class="GtkTreeView" id="treeview_users1">
-                                    <property name="visible">True</property>
-                                    <property name="can-focus">True</property>
-                                    <child internal-child="selection">
-                                      <object class="GtkTreeSelection"/>
-                                    </child>
-                                  </object>
-                                </child>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">True</property>
-                                <property name="position">1</property>
-                              </packing>
+                              <placeholder/>
                             </child>
                           </object>
                           <packing>
                             <property name="name">page_discussion</property>
-                            <property name="title" translatable="yes">Discussions</property>
+                            <property name="title" translatable="yes">Questions (webkit)</property>
                             <property name="icon-name">jargonaut-channel-chat</property>
                             <property name="position">1</property>
                           </packing>

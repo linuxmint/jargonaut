@@ -1,0 +1,32 @@
+body {
+    font-family: monospace, monospace;
+}
+
+.chattable {
+    border-collapse: separate;
+    border-spacing:3px 6px;
+}
+
+.msg {
+    margin-bottom: 3px;
+}
+
+.nick {
+    text-align: right;
+}
+
+.mine .nick {
+    color: red;
+}
+
+.mine .msg {
+    color: grey;
+}
+
+.theirs .msg {
+    color: black;
+}
+
+.response .msg {
+    color: red;
+}

@@ -4,7 +4,8 @@ import gi
 import irc.client
 gi.require_version('Gtk', '3.0')
 gi.require_version('XApp', '1.0')
-from gi.repository import Gtk, Gio, GLib, Gdk, XApp
+gi.require_version('WebKit2', '4.1')
+from gi.repository import Gtk, Gio, GLib, Gdk, XApp, WebKit2
 from irc.connection import Factory
 import random
 import threading
@@ -27,7 +28,10 @@ gettext.bindtextdomain(APP, LOCALE_DIR)
 gettext.textdomain(APP)
 _ = gettext.gettext
 
-
+class Message():
+    def __init__(self, nick, text):
+        self.nick = nick
+        self.text = text
 class App(Gtk.Application):
     def __init__(self):
         super().__init__(application_id="org.x.jargonaut")
@@ -52,6 +56,7 @@ class App(Gtk.Application):
 
         self.channel_users = {}
         self.channel_users[self.channel] = []
+        self.messages = []
 
         prefer_dark_mode = self.settings.get_boolean("prefer-dark-mode")
         try:
@@ -91,6 +96,10 @@ class App(Gtk.Application):
         self.treeview = self.builder.get_object("treeview_chat")
         self.store = Gtk.ListStore(str, str, str) # nick, message
         self.treeview.set_model(self.store)
+
+        self.webview = WebKit2.WebView()
+        self.builder.get_object("page_discussion").pack_start(self.webview, True, True, 0)
+        self.webview.show()
 
         renderer = Gtk.CellRendererText()
         renderer.props.xalign = 1.0
@@ -341,28 +350,81 @@ class App(Gtk.Application):
 # UI IRC functions
 ##################
 
-    @idle
-    def print_message(self, nick, message):
-        # Format text (IRC codes -> pango)
-        message = re.sub(r'\x02(.*?)\x02', r'<b>\1</b>', message)
-        message = re.sub(r'\x16(.*?)\x16', r'<i>\1</i>', message)
-        message = re.sub(r'\x1D(.*?)\x1D', r'<i>\1</i>', message)
-        message = re.sub(r'\x1F(.*?)\x1F', r'<u>\1</u>', message)
-        message = re.sub(r'\x1E(.*?)\x1E', r'<s>\1</s>', message)
+    def render_html(self):
+        messages_section = ""
+        last_nick = ""
+        for message in self.messages:
+            class_name = "theirs"
+            nickname = message.nick
+            color = self.user_colors[nickname]
+            nickname = f"<font color='{color}'>{nickname}</font>"
+            sep = "|"
+            text = message.text
+            words = text.lower().split(" ")
+            if message.nick == self.nickname:
+                nickname = "*"
+                sep = ">"
+                class_name = "mine"
+            elif self.nickname.lower() in words or (self.nickname+":").lower() in words or ("@"+self.nickname).lower() in words:
+                class_name = "response"
+            if message.nick == last_nick:
+                nickname = ""
+            messages_section += f"""
+                    <tr class="{class_name}" valign="top">
+                        <td class="nick">{nickname}</td>
+                        <td class="sep">{sep}</td>
+                        <td class="msg">{text}</td>
+                    </tr>
+                    """
+            last_nick = message.nick
+
+        html = f"""
+<html>
+<head>
+    <link rel="stylesheet" type="text/css" href="webview.css">
+</head>
+<body>
+    <table class="chattable">
+        {messages_section}
+    </table>
+    <script>
+        window.scrollTo(0, document.body.scrollHeight);
+    </script>
+</body>
+</html>
+        """
+
+        self.webview.load_html(html, "file:///usr/share/jargonaut/")
+
+    def render_treeview(self, message):
+        text = message.text
         sep = "|"
-        nickname = nick
-        words = message.lower().split(" ")
-        if nick == self.nickname:
+        nickname = message.nick
+        words = text.lower().split(" ")
+        if message.nick == self.nickname:
             nickname = "*"
             sep = ">"
-            message = f"<span foreground='grey'>{message}</span>"
+            text = f"<span foreground='grey'>{text}</span>"
         elif self.nickname.lower() in words or (self.nickname+":").lower() in words or ("@"+self.nickname).lower() in words:
-            message = f"<span foreground='red'>{message}</span>"
-        if nick == self.last_message_nick:
+            text = f"<span foreground='red'>{text}</span>"
+        if message.nick == self.last_message_nick:
             nickname = ""
-        iter = self.store.append([self.get_nick_markup(nickname), message, sep])
+        iter = self.store.append([self.get_nick_markup(nickname), text, sep])
         path = self.store.get_path(iter)
         self.treeview.scroll_to_cell(path, None, False, 0.0, 0.0)
+
+    @idle
+    def print_message(self, nick, text):
+        # Format text (IRC codes -> pango/HTML)
+        text = re.sub(r'\x02(.*?)\x02', r'<b>\1</b>', text)
+        text = re.sub(r'\x16(.*?)\x16', r'<i>\1</i>', text)
+        text = re.sub(r'\x1D(.*?)\x1D', r'<i>\1</i>', text)
+        text = re.sub(r'\x1F(.*?)\x1F', r'<u>\1</u>', text)
+        text = re.sub(r'\x1E(.*?)\x1E', r'<s>\1</s>', text)
+        message = Message(nick, text)
+        self.messages.append(message)
+        self.render_treeview(message)
+        self.render_html()
         self.last_message_nick = nick
 
     @idle
