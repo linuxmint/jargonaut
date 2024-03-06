@@ -8,7 +8,7 @@ gi.require_version('WebKit2', '4.1')
 from gi.repository import Gtk, Gio, GLib, Gdk, XApp, WebKit2
 from irc.connection import Factory
 import random
-import threading
+import html
 import getpass
 import random
 import re
@@ -16,6 +16,7 @@ import ssl
 import gettext
 import locale
 import setproctitle
+import webbrowser
 from settings import bind_entry_widget, bind_switch_widget
 from ui import build_menu, idle, _async, color_palette
 setproctitle.setproctitle("jargonaut")
@@ -98,6 +99,7 @@ class App(Gtk.Application):
         self.treeview.set_model(self.store)
 
         self.webview = WebKit2.WebView()
+        self.webview.connect("decide-policy", self.on_decide_policy)
         self.builder.get_object("page_discussion").pack_start(self.webview, True, True, 0)
         self.webview.show()
 
@@ -398,6 +400,8 @@ class App(Gtk.Application):
 
     def render_treeview(self, message):
         text = message.text
+        # Escape any tags, i.e. show exactly what people typed, don't let Webkit interpret it.
+        text = html.escape(text)
         sep = "|"
         nickname = message.nick
         words = text.lower().split(" ")
@@ -415,12 +419,24 @@ class App(Gtk.Application):
 
     @idle
     def print_message(self, nick, text):
+        # Escape any tags, i.e. show exactly what people typed, don't let Webkit interpret it.
+        text = html.escape(text)
         # Format text (IRC codes -> pango/HTML)
         text = re.sub(r'\x02(.*?)\x02', r'<b>\1</b>', text)
         text = re.sub(r'\x16(.*?)\x16', r'<i>\1</i>', text)
         text = re.sub(r'\x1D(.*?)\x1D', r'<i>\1</i>', text)
         text = re.sub(r'\x1F(.*?)\x1F', r'<u>\1</u>', text)
         text = re.sub(r'\x1E(.*?)\x1E', r'<s>\1</s>', text)
+        # Convert URLs to clickable links
+        url_pattern = r'((http[s]?://)?[^\s]+(\.com|\.org)\b[^\s]*\b)'
+        def repl(match):
+            url = match.group(1)
+            if '://' not in url:
+                url = 'https://' + url
+            return '<a href="{}">{}</a>'.format(url, url)
+        text = re.sub(url_pattern, repl, text)
+
+
         message = Message(nick, text)
         self.messages.append(message)
         self.render_treeview(message)
@@ -456,6 +472,17 @@ class App(Gtk.Application):
 ###############
 # App functions
 ###############
+
+    def on_decide_policy(self, view, decision, decision_type):
+        if decision_type == WebKit2.PolicyDecisionType.NAVIGATION_ACTION:
+            navigation_action = decision.get_navigation_action()
+            if navigation_action.get_mouse_button() == 0:
+                return False
+            uri = decision.get_request().get_uri()
+            webbrowser.open(uri)
+            decision.ignore()
+            return True
+        return False
 
     def on_page_changed(self, stack, param):
         if stack.get_visible_child_name() in ["page_questions", "page_discussion"]:
