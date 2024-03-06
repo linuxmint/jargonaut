@@ -53,7 +53,14 @@ class App(Gtk.Application):
         self.channel_users = {}
         self.channel_users[self.channel] = []
 
-        self.dark_mode_manager = XApp.DarkModeManager.new(self.settings.get_boolean("prefer-dark-mode"))
+        prefer_dark_mode = self.settings.get_boolean("prefer-dark-mode")
+        try:
+            # DarkModeManager is available in XApp 2.6+
+            self.dark_mode_manager = XApp.DarkModeManager.new(prefer_dark_mode)
+        except:
+            print("XAppDarkModeManager not available, using Gtk.Settings")
+            # Use the Gtk.Settings API as a fallback for older versions
+            Gtk.Settings.get_default().set_property("gtk-application-prefer-dark-theme", prefer_dark_mode)
 
         self.last_key_press_is_tab = False
         self.last_message_nick = ""
