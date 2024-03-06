@@ -2,6 +2,10 @@ body {
     font-family: monospace, monospace;
 }
 
+.thumb {
+    max-height: 200px;
+}
+
 .chattable {
     border-collapse: separate;
     border-spacing:3px 6px;

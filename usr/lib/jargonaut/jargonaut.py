@@ -433,9 +433,11 @@ class App(Gtk.Application):
             url = match.group(1)
             if '://' not in url:
                 url = 'https://' + url
-            return '<a href="{}">{}</a>'.format(url, url)
+            if url.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
+                return f'<a href="{url}">{url}</br><img class="thumb" src="{url}" alt="image" /></a>'
+            else:
+                return f'<a href="{url}">{url}</a>'
         text = re.sub(url_pattern, repl, text)
-
 
         message = Message(nick, text)
         self.messages.append(message)
