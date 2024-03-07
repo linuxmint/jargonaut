@@ -1,3 +1,29 @@
+jargonaut (1.0.7) wilma; urgency=medium
+
+  * Make highlight red and case-insensitive
+  * Improve color palette
+  * Sort user list alphabetically
+  * Fix names handling
+  * Specify a quit message
+  * Use print_info vs print
+  * Refactoring: Rename IRCApp
+  * Refactoring: Use signals and move settings utility functions
+  * Move basic UI parts to ui.py
+  * Don't depend on libXapp 2.6
+  * Ensure IRC callbacks run in the GTK thread
+  * UI: Set the window icon name
+  * Add a webkit view
+  * Escape any tags coming from IRC and make links clickable
+  * Replace img text with a thumbnail
+  * Support /me commands
+  * Add a tray icon
+  * Add notifications
+  * Add missing dep, sort imports
+  * Add .gitignore
+  * Update README
+
+ -- Clement Lefebvre <root@linuxmint.com>  Thu, 07 Mar 2024 10:32:25 +0000
+
 jargonaut (1.0.6) wilma; urgency=medium
 
   * Right align user column
