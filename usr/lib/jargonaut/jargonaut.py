@@ -5,7 +5,8 @@ import irc.client
 gi.require_version('Gtk', '3.0')
 gi.require_version('XApp', '1.0')
 gi.require_version('WebKit2', '4.1')
-from gi.repository import Gtk, Gio, GLib, Gdk, XApp, WebKit2
+gi.require_version('Notify', '0.7')
+from gi.repository import Gtk, Gio, GLib, Gdk, XApp, WebKit2, Notify
 from irc.connection import Factory
 import random
 import html
@@ -28,6 +29,8 @@ locale.bindtextdomain(APP, LOCALE_DIR)
 gettext.bindtextdomain(APP, LOCALE_DIR)
 gettext.textdomain(APP)
 _ = gettext.gettext
+
+Notify.init(_("Chat Room"))
 
 class Message():
     def __init__(self, nick, text):
@@ -95,7 +98,7 @@ class App(Gtk.Application):
         menu.show_all()
         self.tray = XApp.StatusIcon()
         self.tray.set_secondary_menu(menu)
-        self.tray.set_icon_name("jargonaut-symbolic")
+        self.tray.set_icon_name("jargonaut-status-normal-symbolic")
         self.tray.set_tooltip_text(_("Chat Room"))
         self.tray.set_visible(True)
         self.tray.connect('activate', self.on_tray_activated)
@@ -393,6 +396,13 @@ class App(Gtk.Application):
                 class_name = "mine"
             elif self.nickname.lower() in words or (self.nickname+":").lower() in words or ("@"+self.nickname).lower() in words:
                 class_name = "response"
+                print("Response..")
+                if not self.window.is_visible():
+                    print("Window not visible..")
+                    self.tray.set_icon_name("jargonaut-status-msg-symbolic")
+                    title = _("Message from %s") % message.nick
+                    self.send_notification(title, text)
+                print("Job done")
             if message.nick == last_nick:
                 nickname = ""
             if text.startswith("\x01ACTION") and text.endswith("\x01"):
@@ -518,11 +528,26 @@ class App(Gtk.Application):
         window.hide()
         return True
 
+    def send_notification(self, title, text):
+        # We use self.notification (instead of just a variable) to keep a memory pointer
+        # on the notification. Without doing this, callbacks are never executed by Gtk/Notify.
+        self.notification = Notify.Notification.new(title, text, "jargonaut-status-msg-symbolic")
+        self.notification.set_urgency(2)
+        self.notification.set_timeout(Notify.EXPIRES_NEVER)
+        self.notification.connect("closed", self.on_notification_closed)
+        self.notification.show()
+
+    def on_notification_closed(self, notification):
+        self.tray.set_icon_name("jargonaut-status-normal-symbolic")
+        self.window.show()
+        self.window.present()
+
     def on_tray_quit(self, widget):
         self.quit()
 
     def on_tray_activated(self, icon, button, time):
         if button == Gdk.BUTTON_PRIMARY:
+            self.tray.set_icon_name("jargonaut-status-normal-symbolic")
             try:
                 focused = self.window.get_window().get_state() & Gdk.WindowState.FOCUSED
             except:
