@@ -10,16 +10,11 @@ Under the hood it uses IRC, though it makes no difference from a user point of v
 
 ## rendering
 
-- Switch to HTML/CSS
-	- Add timestamps
-	- Make links clickable
-	- wordwrap
-	- Put lines closer to one-another
+- Add timestamps
 
 ## Other
 
 - Connect to multiple channels
-- Refactor OOP
 
 # Todo 2.0
 
@@ -36,11 +31,9 @@ Under the hood it uses IRC, though it makes no difference from a user point of v
 ## Rendering
 
 - add a line to indicate where the last read message was
-- Implement thumbs for pictures?
 
 ## Features
 
-- support /me command
 - ability to ignore users (probably means we need a unique way of IDing them as well)
 - Implement a tray
 - Notify the user when quoted
@@ -57,3 +50,4 @@ Under the hood it uses IRC, though it makes no difference from a user point of v
 - show people who left if user interacted with them or if they spoke recently
 - detect all caps message and suppress them
 - Show what happened before join(), via a logger/bot?
+- disable thumbs by default
