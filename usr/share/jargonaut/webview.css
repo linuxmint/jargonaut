@@ -3,6 +3,7 @@ body {
     color: #d8dee9;
     font: normal 15px Source Sans Pro,sans-serif;
     overflow-x: hidden; /* Hide horizontal scrollbar */
+    padding-right: 20px;
 }
 
 
