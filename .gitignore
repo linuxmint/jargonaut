@@ -2,3 +2,4 @@ debian/jargonaut/
 debian/*debhelper*
 debian/files
 debian/*substvars*
+usr/share/jargonaut/jargonaut.ui~
