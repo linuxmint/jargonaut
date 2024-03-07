@@ -20,7 +20,7 @@
       <default>""</default>
     </key>
     <key name="prefer-dark-mode" type="b">
-      <default>false</default>
+      <default>true</default>
     </key>
       <key name="debug" type="b">
       <default>false</default>

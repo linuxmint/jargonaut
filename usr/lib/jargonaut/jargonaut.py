@@ -139,7 +139,7 @@ class App(Gtk.Application):
         self.user_treeview.append_column(col)
 
         self.assign_color(self.nickname)
-        self.builder.get_object("label_username").set_markup(self.get_nick_markup(self.nickname))
+        self.builder.get_object("label_username").set_markup(self.nickname)
 
         self.builder.get_object("channel_stack").connect("notify::visible-child-name", self.on_page_changed)
 
@@ -171,12 +171,7 @@ class App(Gtk.Application):
             self.color_index = (self.color_index + 1) % len(color_palette)
 
     def get_nick_markup(self, nick):
-        if nick == "":
-            color = "grey"
-        elif nick == "*":
-            color = "red"
-        else:
-            color = self.user_colors[nick]
+        color = self.user_colors[nick]
         nick = f"<span foreground='{color}'>{nick}</span>"
         return nick
 
@@ -293,7 +288,7 @@ class App(Gtk.Application):
             self.assign_color(new_nick)
         if old_nick == self.nickname:
             self.nickname = new_nick
-            self.builder.get_object("label_username").set_markup(self.get_nick_markup(new_nick))
+            self.builder.get_object("label_username").set_markup(new_nick)
         self.update_users()
 
     @idle
@@ -356,48 +351,45 @@ class App(Gtk.Application):
         self.assign_color(self.nickname)
         connection.nick(self.nickname)
         self.print_info(f"Nickname in use, switching to '{self.nickname}'")
-        self.builder.get_object("label_username").set_markup(self.get_nick_markup(self.nickname))
+        self.builder.get_object("label_username").set_markup(self.nickname)
 
 ##################
 # UI IRC functions
 ##################
 
     def render_html(self):
-        messages_section = ""
+        messages_section = "<div>"
         last_nick = ""
         for message in self.messages:
-            class_name = "theirs"
+            mine = ""
+            response = ""
             nickname = message.nick
+            letter = nickname[0].upper()
             color = self.user_colors[nickname]
-            nickname = f"<font color='{color}'>{nickname}</font>"
-            sep = "|"
             text = message.text
             words = text.lower().split(" ")
+            if text.startswith("\x01ACTION") and text.endswith("\x01"):
+                text = text.replace("\x01ACTION", "").replace("\x01", "")
+                text = f"<i>* {message.nick} {text}</i>"
             if message.nick == self.nickname:
-                nickname = "*"
-                sep = ">"
-                class_name = "mine"
+                mine = "mine"
             elif self.nickname.lower() in words or (self.nickname+":").lower() in words or ("@"+self.nickname).lower() in words:
-                class_name = "response"
-                print("Response..")
+                response = "response"
                 if not self.window.is_visible():
-                    print("Window not visible..")
                     self.tray.set_icon_name("jargonaut-status-msg-symbolic")
                     title = _("Message from %s") % message.nick
                     self.send_notification(title, text)
-                print("Job done")
             if message.nick == last_nick:
-                nickname = ""
-            if text.startswith("\x01ACTION") and text.endswith("\x01"):
-                text = text.replace("\x01ACTION", "").replace("\x01", "")
-                text = f"<font color='{color}'>{message.nick}</font> {text}</i>"
-                nickname = ""
-            messages_section += f"""
-                    <tr class="{class_name}" valign="top">
-                        <td class="nick">{nickname}</td>
-                        <td class="sep">{sep}</td>
-                        <td class="msg">{text}</td>
-                    </tr>
+                messages_section += f"""
+                        <div class="line {response}">{text}</div>
+                    """
+            else:
+                messages_section += f"""
+                    </div>
+                    <div class="messages {mine}">
+                        <span class="avatar"><span style="background-color:{color}">{letter}</span></span>
+                        <div class="nick">{nickname}<span class="date"></span></div>
+                        <div class="line {response}">{text}</div>
                     """
             last_nick = message.nick
 
@@ -407,9 +399,8 @@ class App(Gtk.Application):
     <link rel="stylesheet" type="text/css" href="webview.css">
 </head>
 <body>
-    <table class="chattable">
-        {messages_section}
-    </table>
+    {messages_section}
+    </div>
     <script>
         window.scrollTo(0, document.body.scrollHeight);
     </script>

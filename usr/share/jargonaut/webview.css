@@ -1,36 +1,88 @@
 body {
-    font-family: monospace, monospace;
+    background-color: #404040;
+    color: #d8dee9;
+    font: normal 15px Source Sans Pro,sans-serif;
 }
+
 
 .thumb {
     max-height: 200px;
 }
 
-.chattable {
-    border-collapse: separate;
-    border-spacing:3px 6px;
+.nick {
+    text-align: left;
+    font-weight: bold;
 }
 
-.msg {
-    margin-bottom: 3px;
+.mine .line {
+    color: #a6acb9;
+}
+
+
+.messages {
+    position: relative;
+    left: 0px;
+    top: 0px;
+    padding: 15px;
+    padding-bottom: 5px;
+}
+
+.response {
+    background-color: rgba(0,0,0, 0.1);
+    font-weight: 600;
+}
+
+.mine {
+    background-color: #404040;
+}
+
+.avatar {
+    position: absolute;
+    top: 16px;
+    left: 3px;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-content: center;
+    text-align: center;
+}
+
+.avatar span {
+    font-size: 1em;
+    background: #5592ca;
+    color: white;
+    border-radius: 50%;
+    height: 2em;
+    width: 2em;
+    line-height: 2em;
+    font-weight: 500;
+    box-shadow: inset 0 -1px 0 rgba(0,0,0,.3);
 }
 
 .nick {
-    text-align: right;
+    position: relative;
+    top: 0px;
+    left: 30px;
+    font-weight: 600;
+    color: #ebf2f9;
 }
 
-.mine .nick {
-    color: red;
+.line {
+    position: relative;
+    left: 30px;
+    top: 3px;
+    font-size: 1em;
+    font-weight: 400;
+    padding-bottom: 0.1em;
 }
 
-.mine .msg {
-    color: grey;
+.date {
+    color: #848b95;
+    font-size: 0.7em;
+    margin-left: 10px;
 }
 
-.theirs .msg {
-    color: black;
-}
-
-.response .msg {
-    color: red;
+.response {
+    color: #ec5f66;
+    font-weight: 600;
 }

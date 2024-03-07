@@ -14,6 +14,7 @@ gettext.textdomain(APP)
 _ = gettext.gettext
 
 color_palette = [
+    "#27252E",  # Dark grey
     "#E6194B",  # Red
     "#3CB44B",  # Green
     "#D1A75A",  # Jaune
