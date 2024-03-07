@@ -1,0 +1,4 @@
+debian/jargonaut/
+debian/*debhelper*
+debian/files
+debian/*substvars*
