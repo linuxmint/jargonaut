@@ -426,7 +426,7 @@ class App(Gtk.Application):
             url = match.group(1)
             if '://' not in url:
                 url = 'https://' + url
-            if url.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
+            if url.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.svg', '.bmp', '.webp')):
                 return f'<a href="{url}">{url}</br><img class="thumb" src="{url}" alt="image" /></a>'
             else:
                 return f'<a href="{url}">{url}</a>'
