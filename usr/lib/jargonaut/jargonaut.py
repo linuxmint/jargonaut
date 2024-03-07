@@ -370,7 +370,7 @@ class App(Gtk.Application):
             words = text.lower().split(" ")
             if text.startswith("\x01ACTION") and text.endswith("\x01"):
                 text = text.replace("\x01ACTION", "").replace("\x01", "")
-                text = f"<i>* {message.nick} {text}</i>"
+                text = f"<i>* {text}</i>"
             if message.nick == self.nickname:
                 mine = "mine"
             elif self.nickname.lower() in words or (self.nickname+":").lower() in words or ("@"+self.nickname).lower() in words:
