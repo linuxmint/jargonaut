@@ -316,7 +316,16 @@ class App(Gtk.Application):
     @idle
     def on_all_raw_messages(self, connection, event):
         if self.settings.get_boolean("debug"):
-            self.print_info("Raw message: " + str(event.arguments))
+            content = str(event.arguments)
+            self.print_info("Raw message: " + content)
+            # Actions (i.e. /me commands) are not received as PRIVMSGS or PUBMSGS
+            # only as RAW messages, so we need to handle them here
+            if f"PRIVMSG {self.channel}" in content:
+                if "\\x01ACTION" in content:
+                    nick = content.split("!")[0].split(":")[1]
+                    text = content.split("\\x01ACTION")[1].split("\\x01")[0]
+                    text = f"\x01ACTION{text}\x01"
+                    self.print_message(nick, text)
 
     @idle
     def on_pubmsg(self, connection, event):
@@ -370,6 +379,10 @@ class App(Gtk.Application):
             elif self.nickname.lower() in words or (self.nickname+":").lower() in words or ("@"+self.nickname).lower() in words:
                 class_name = "response"
             if message.nick == last_nick:
+                nickname = ""
+            if text.startswith("\x01ACTION") and text.endswith("\x01"):
+                text = text.replace("\x01ACTION", "").replace("\x01", "")
+                text = f"<font color='{color}'>{message.nick}</font> {text}</i>"
                 nickname = ""
             messages_section += f"""
                     <tr class="{class_name}" valign="top">
@@ -535,8 +548,16 @@ class App(Gtk.Application):
                 widget.set_completion(None)
                 widget.set_text("")
                 widget.set_completion(completion)
-                self.print_message(self.nickname, message)
-                self.send_message(message)
+                if message.startswith("/me "):
+                    local_msg = message.replace("/me ", self.nickname + " ", 1)
+                    remote_msg = message.replace("/me ", " ", 1)
+                    remote_msg = f"\x01ACTION{remote_msg}\x01"
+                    self.print_message(self.nickname, local_msg)
+                    self.send_message(remote_msg)
+                else:
+                    self.print_message(self.nickname, message)
+                    self.send_message(message)
+
             return True
         elif ctrl and keyname == "b":
             widget.set_text(text + "\x02")
