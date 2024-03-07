@@ -75,6 +75,7 @@ class App(Gtk.Application):
         self.builder.add_from_file("/usr/share/jargonaut/jargonaut.ui")
         self.window = self.builder.get_object("main_window")
         self.window.set_application(self)
+        self.window.connect("delete_event", self.close_window)
         self.window.show_all()
 
         css_provider = Gtk.CssProvider()
@@ -84,6 +85,20 @@ class App(Gtk.Application):
             css_provider,
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
         )
+
+        # Tray
+        menu = Gtk.Menu()
+        image = Gtk.Image.new_from_icon_name("application-exit-symbolic", Gtk.IconSize.MENU)
+        menuItem = Gtk.ImageMenuItem(label=_("Quit"), image=image)
+        menuItem.connect('activate', self.on_tray_quit)
+        menu.append(menuItem)
+        menu.show_all()
+        self.tray = XApp.StatusIcon()
+        self.tray.set_secondary_menu(menu)
+        self.tray.set_icon_name("jargonaut-symbolic")
+        self.tray.set_tooltip_text(_("Chat Room"))
+        self.tray.set_visible(True)
+        self.tray.connect('activate', self.on_tray_activated)
 
         # Menubar
         menu = self.builder.get_object("main_menu")
@@ -498,6 +513,26 @@ class App(Gtk.Application):
             decision.ignore()
             return True
         return False
+
+    def close_window(self, window, event):
+        window.hide()
+        return True
+
+    def on_tray_quit(self, widget):
+        self.quit()
+
+    def on_tray_activated(self, icon, button, time):
+        if button == Gdk.BUTTON_PRIMARY:
+            try:
+                focused = self.window.get_window().get_state() & Gdk.WindowState.FOCUSED
+            except:
+                focused = self.window.is_active() and self.window.get_visible()
+
+            if focused:
+                self.window.hide()
+            else:
+                self.window.show()
+                self.window.present_with_time(time)
 
     def on_page_changed(self, stack, param):
         if stack.get_visible_child_name() in ["page_questions", "page_discussion"]:
