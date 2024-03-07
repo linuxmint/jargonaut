@@ -1,26 +1,25 @@
 #!/usr/bin/python3
 
 import gi
-import irc.client
 gi.require_version('Gtk', '3.0')
-gi.require_version('XApp', '1.0')
-gi.require_version('WebKit2', '4.1')
 gi.require_version('Notify', '0.7')
-from gi.repository import Gtk, Gio, GLib, Gdk, XApp, WebKit2, Notify
-from irc.connection import Factory
-import random
-import html
+gi.require_version('WebKit2', '4.1')
+gi.require_version('XApp', '1.0')
+from gi.repository import Gtk, Gio, GLib, Gdk, Notify, WebKit2, XApp
+import irc.client
 import getpass
+import gettext
+import html
+import locale
+import random
 import random
 import re
-import ssl
-import gettext
-import locale
 import setproctitle
+import ssl
 import webbrowser
+from irc.connection import Factory
 from settings import bind_entry_widget, bind_switch_widget
 from ui import build_menu, idle, _async, color_palette
-setproctitle.setproctitle("jargonaut")
 
 # i18n
 APP = "jargonaut"
@@ -30,6 +29,7 @@ gettext.bindtextdomain(APP, LOCALE_DIR)
 gettext.textdomain(APP)
 _ = gettext.gettext
 
+setproctitle.setproctitle("jargonaut")
 Notify.init(_("Chat Room"))
 
 class Message():
