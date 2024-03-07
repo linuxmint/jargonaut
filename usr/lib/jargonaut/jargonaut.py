@@ -112,29 +112,12 @@ class App(Gtk.Application):
         bind_entry_widget(self.builder.get_object("pref_password"), self.settings, "password")
         bind_switch_widget(self.builder.get_object("pref_dark"), self.settings, "prefer-dark-mode", fn_callback=self.update_dark_mode)
 
-        self.treeview = self.builder.get_object("treeview_chat")
-        self.store = Gtk.ListStore(str, str, str) # nick, message
-        self.treeview.set_model(self.store)
-
         self.webview = WebKit2.WebView()
         self.webview.connect("decide-policy", self.on_decide_policy)
-        self.builder.get_object("page_discussion").pack_start(self.webview, True, True, 0)
         self.webview.show()
+        self.render_html()
 
-        renderer = Gtk.CellRendererText()
-        renderer.props.xalign = 1.0
-        col = Gtk.TreeViewColumn("", renderer, markup=0)
-        col.set_name("first_column")
-        self.treeview.append_column(col)
-
-        # Add a dedicated column which always renders |
-        renderer = Gtk.CellRendererText()
-        col = Gtk.TreeViewColumn("", renderer, text=2)
-        self.treeview.append_column(col)
-
-        renderer = Gtk.CellRendererText()
-        col = Gtk.TreeViewColumn("", renderer, markup=1)
-        self.treeview.append_column(col)
+        self.builder.get_object("webview_box").pack_start(self.webview, True, True, 0)
 
         self.user_treeview = self.builder.get_object("treeview_users")
         self.user_store = Gtk.ListStore(str, str) # nick, raw_nick
@@ -436,25 +419,6 @@ class App(Gtk.Application):
 
         self.webview.load_html(html, "file:///usr/share/jargonaut/")
 
-    def render_treeview(self, message):
-        text = message.text
-        # Escape any tags, i.e. show exactly what people typed, don't let Webkit interpret it.
-        text = html.escape(text)
-        sep = "|"
-        nickname = message.nick
-        words = text.lower().split(" ")
-        if message.nick == self.nickname:
-            nickname = "*"
-            sep = ">"
-            text = f"<span foreground='grey'>{text}</span>"
-        elif self.nickname.lower() in words or (self.nickname+":").lower() in words or ("@"+self.nickname).lower() in words:
-            text = f"<span foreground='red'>{text}</span>"
-        if message.nick == self.last_message_nick:
-            nickname = ""
-        iter = self.store.append([self.get_nick_markup(nickname), text, sep])
-        path = self.store.get_path(iter)
-        self.treeview.scroll_to_cell(path, None, False, 0.0, 0.0)
-
     @idle
     def print_message(self, nick, text):
         # Escape any tags, i.e. show exactly what people typed, don't let Webkit interpret it.
@@ -479,7 +443,6 @@ class App(Gtk.Application):
 
         message = Message(nick, text)
         self.messages.append(message)
-        self.render_treeview(message)
         self.render_html()
         self.last_message_nick = nick
 
