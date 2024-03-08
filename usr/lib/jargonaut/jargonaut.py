@@ -378,10 +378,6 @@ class App(Gtk.Application):
                 mine = "mine"
             elif self.nickname.lower() in words or (self.nickname+":").lower() in words or ("@"+self.nickname).lower() in words:
                 response = "response"
-                if not self.window.is_visible():
-                    self.tray.set_icon_name("jargonaut-status-msg-symbolic")
-                    title = _("Message from %s") % message.nick
-                    self.send_notification(title, text)
             if message.nick == last_nick:
                 messages_section += f"""
                         <div class="line {response}">{text}</div>
@@ -437,6 +433,13 @@ class App(Gtk.Application):
         self.messages.append(message)
         self.render_html()
         self.last_message_nick = nick
+
+        words = text.lower().split(" ")
+        if self.nickname.lower() in words or (self.nickname+":").lower() in words or ("@"+self.nickname).lower() in words:
+            if not self.window.is_visible():
+                self.tray.set_icon_name("jargonaut-status-msg-symbolic")
+                title = _("Message from %s") % message.nick
+                self.send_notification(title, text)
 
     @idle
     def update_users(self):
