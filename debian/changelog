@@ -1,3 +1,18 @@
+jargonaut (1.0.8) wilma; urgency=medium
+
+  * Remove treeview
+  * .gitignore: Add usr/share/jargonaut/jargonaut.ui~
+  * Update look and feel
+  * Fine tune /me
+  * Hide horizontal scrollbar
+  * Add padding to the right
+  * Recognize more image extensions
+  * Improve thumbs and links
+  * Update README
+  * Add compatibility for Webkit2 4.0
+
+ -- Clement Lefebvre <root@linuxmint.com>  Fri, 08 Mar 2024 00:13:53 +0000
+
 jargonaut (1.0.7) wilma; urgency=medium
 
   * Make highlight red and case-insensitive
