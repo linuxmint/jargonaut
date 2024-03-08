@@ -1,3 +1,19 @@
+jargonaut (1.0.9) virginia; urgency=medium
+
+  * Fix notifications
+  * Improve /me command
+  * Update README
+  * Disable HW acceleration policy
+  * Notify when the window is not focused
+  * CSS: Use media to support light/dark modes
+  * Increase opacity on default tray icon
+  * Update README
+  * Support numpad Enter key
+  * Add spell checking
+  * Update README
+
+ -- Clement Lefebvre <root@linuxmint.com>  Fri, 08 Mar 2024 15:05:12 +0000
+
 jargonaut (1.0.8) wilma; urgency=medium
 
   * Remove treeview
