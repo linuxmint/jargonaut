@@ -7,8 +7,17 @@ body {
 }
 
 
+a {
+    color: #d8dee9;
+}
+
+img {
+    padding: 5px;
+}
+
 .thumb {
     max-height: 200px;
+    border-radius: 10%;
 }
 
 .nick {

@@ -421,13 +421,11 @@ class App(Gtk.Application):
         text = re.sub(r'\x1F(.*?)\x1F', r'<u>\1</u>', text)
         text = re.sub(r'\x1E(.*?)\x1E', r'<s>\1</s>', text)
         # Convert URLs to clickable links
-        url_pattern = r'((http[s]?://)?[^\s]+(\.com|\.org)\b[^\s]*\b)'
+        url_pattern = r'((http[s]?://[^\s]{3,}\.[^\s]{2,}))'
         def repl(match):
             url = match.group(1)
-            if '://' not in url:
-                url = 'https://' + url
             if url.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.svg', '.bmp', '.webp')):
-                return f'<a href="{url}">{url}</br><img class="thumb" src="{url}" alt="image" /></a>'
+                return f'<a href="{url}"><img class="thumb" src="{url}" title="{url}"/></a>'
             else:
                 return f'<a href="{url}">{url}</a>'
         text = re.sub(url_pattern, repl, text)
