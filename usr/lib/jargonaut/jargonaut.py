@@ -563,7 +563,7 @@ class App(Gtk.Application):
             return True  # Stop propagation of the event
         else:
             self.last_key_press_is_tab = False
-        if keyname == "Return":
+        if keyname == "Return" or keyname == "KP_Enter":
             message = text.strip()
             if message != "":
                 completion = widget.get_completion()
