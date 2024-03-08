@@ -2,13 +2,14 @@
 
 import gi
 gi.require_version('Gtk', '3.0')
+gi.require_version('Gspell', '1')
 gi.require_version('Notify', '0.7')
 try:
     gi.require_version('WebKit2', '4.1')
 except:
     gi.require_version('WebKit2', '4.0')
 gi.require_version('XApp', '1.0')
-from gi.repository import Gtk, Gio, GLib, Gdk, Notify, WebKit2, XApp
+from gi.repository import Gtk, Gio, GLib, Gdk, Notify, WebKit2, XApp, Gspell
 import irc.client
 import getpass
 import gettext
@@ -137,6 +138,9 @@ class App(Gtk.Application):
         self.entry = self.builder.get_object("entry_main")
         self.entry.set_completion(completion)
         self.entry.connect("key-press-event", self.on_key_press_event)
+
+        gspell_entry = Gspell.Entry.get_from_gtk_entry(self.entry)
+        gspell_entry.basic_setup()
 
         renderer = Gtk.CellRendererText()
         col = Gtk.TreeViewColumn("Users", renderer, markup=0)
