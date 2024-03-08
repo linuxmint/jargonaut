@@ -15,28 +15,36 @@ Under the hood it uses IRC, though it makes no difference from a user point of v
 - show nick changes
 - show people who left if user interacted with them or if they spoke recently
 
-## BETA
+## Integration
 
 - Check i18n
 - Set up translations
 - Document the project scope (this isn't meant to be a full IRC client)
-- Design a better icon
 - decouple default settings from mint values
-- add a line to indicate where the last read message was
-- ability to ignore users (probably means we need a unique way of IDing them as well)
-- Filter unwanted words
-- Support DND of files (via pastebin) and images (via imgur)
-- Implement spoiler tag
-- raise awareness that anything prior join isn't seen (i.e. noobs get the impression the room is dead)
-- don't autoscroll if the scrolledview isn't at the bottom
-- spell check
-- detect all caps message and suppress them
-- Show what happened before join(), via a logger/bot?
+- raise awareness that anything prior join isn't seen (i.e. noobs get the impression the room is dead), assistant
+
+# Security / Privacy / Moderation
+
 - disable thumbs by default
-- Add inxi automation
+- Filter unwanted words
+
+## BETA
+
+- ability to ignore users (probably means we need a unique way of IDing them as well)
+- don't autoscroll if the scrolledview isn't at the bottom
 - improve autocompletion for nicknames (it should work when you say hi at least..)
-- support pastebin preview?
 - wait for view to be loaded before autoscroll
-- detect the background color used in the GTK theme to apply it to the Webkit background
-- notifications should test if windows isn't focused, not closed.
 - make not quitting on window close optional
+
+## Features relying on upload
+
+- Add inxi automation
+- Add img DND
+- Add buffer pastebin/imagebin
+
+## Distant future
+
+- spell check
+- Show what happened before join(), via a logger/bot?
+- detect all caps message and suppress them
+- add a line to indicate where the last read message was
