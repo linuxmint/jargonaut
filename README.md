@@ -37,5 +37,3 @@ Under the hood it uses IRC, though it makes no difference from a user point of v
 - improve autocompletion for nicknames (it should work when you say hi at least..)
 - support pastebin preview?
 - wait for view to be loaded before autoscroll
-- regex for img should support svg, bmp, webp
-- regex for domains should be smarter or include .cc, .io..etc.
