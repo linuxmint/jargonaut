@@ -231,8 +231,8 @@ class App(Gtk.Application):
     def identify(self, connection):
         username = self.settings.get_string("nickname")
         password = self.settings.get_string("password")
-        if password != "":
-            self.print_info("Identifying...")
+        if username != "" and password != "":
+            self.print_info(f"Identifying as {username}...")
             connection.privmsg("Nickserv", f"IDENTIFY {username} {password}")
 
     @_async
