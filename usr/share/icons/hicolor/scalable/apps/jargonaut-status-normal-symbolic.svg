@@ -26,7 +26,7 @@
      inkscape:cy="7.9908152"
      inkscape:window-width="2560"
      inkscape:window-height="1348"
-     inkscape:window-x="0"
+     inkscape:window-x="2560"
      inkscape:window-y="0"
      inkscape:window-maximized="1"
      inkscape:current-layer="svg4" />
@@ -35,5 +35,5 @@
      fill="#474747"
      opacity="0.5"
      id="path2"
-     style="fill:#bebebe;fill-opacity:1;stroke-width:1.14286" />
+     style="fill:#bebebe;fill-opacity:1;stroke-width:1.14286;opacity:1" />
 </svg>
