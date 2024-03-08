@@ -37,3 +37,6 @@ Under the hood it uses IRC, though it makes no difference from a user point of v
 - improve autocompletion for nicknames (it should work when you say hi at least..)
 - support pastebin preview?
 - wait for view to be loaded before autoscroll
+- detect the background color used in the GTK theme to apply it to the Webkit background
+- notifications should test if windows isn't focused, not closed.
+- make not quitting on window close optional
