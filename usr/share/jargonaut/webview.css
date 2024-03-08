@@ -1,14 +1,45 @@
-body {
-    background-color: #404040;
-    color: #d8dee9;
+@media(prefers-color-scheme: dark) {
+    body {
+      background: #404040;
+      color: #d8dee9;
+    }
+
+    a {
+      color: PowderBlue;
+    }
+
+    .nick {
+        color: #ebf2f9;
+    }
+
+    .mine .line {
+        color: #a6acb9;
+        font-style: italic;
+    }
+
+  }
+
+@media(prefers-color-scheme: light) {
+    body {
+      background: #ffffff;
+      color: #2d2d2d;
+    }
+
+    a {
+      color: grey;
+    }
+
+    .mine .line {
+        font-style: italic;
+        color: grey;
+    }
+
+  }
+
+  body {
     font: normal 15px Source Sans Pro,sans-serif;
     overflow-x: hidden; /* Hide horizontal scrollbar */
     padding-right: 20px;
-}
-
-
-a {
-    color: #d8dee9;
 }
 
 img {
@@ -25,26 +56,12 @@ img {
     font-weight: bold;
 }
 
-.mine .line {
-    color: #a6acb9;
-}
-
-
 .messages {
     position: relative;
     left: 0px;
     top: 0px;
     padding: 15px;
     padding-bottom: 5px;
-}
-
-.response {
-    background-color: rgba(0,0,0, 0.1);
-    font-weight: 600;
-}
-
-.mine {
-    background-color: #404040;
 }
 
 .avatar {
@@ -60,7 +77,6 @@ img {
 
 .avatar span {
     font-size: 1em;
-    background: #5592ca;
     color: white;
     border-radius: 50%;
     height: 2em;
@@ -75,7 +91,6 @@ img {
     top: 0px;
     left: 30px;
     font-weight: 600;
-    color: #ebf2f9;
 }
 
 .line {
@@ -94,6 +109,7 @@ img {
 }
 
 .response {
+    background: linear-gradient(to right, rgba(0,0,0,.1) 60%, rgba(0,0,0,0));
     color: #ec5f66;
     font-weight: 600;
 }
