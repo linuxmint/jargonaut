@@ -14,6 +14,9 @@ Under the hood it uses IRC, though it makes no difference from a user point of v
 - Connect to multiple channels
 - show nick changes
 - show people who left if user interacted with them or if they spoke recently
+- Fix user list for large channels
+- UI: Let user show/hide side panes
+- support mono tags
 
 ## Integration
 
@@ -44,7 +47,6 @@ Under the hood it uses IRC, though it makes no difference from a user point of v
 
 ## Distant future
 
-- spell check
 - Show what happened before join(), via a logger/bot?
 - detect all caps message and suppress them
 - add a line to indicate where the last read message was
