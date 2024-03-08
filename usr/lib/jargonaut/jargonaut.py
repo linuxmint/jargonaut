@@ -437,7 +437,7 @@ class App(Gtk.Application):
 
         words = text.lower().split(" ")
         if self.nickname.lower() in words or (self.nickname+":").lower() in words or ("@"+self.nickname).lower() in words:
-            if not self.window.is_visible():
+            if not self.is_window_focused():
                 self.tray.set_icon_name("jargonaut-status-msg-symbolic")
                 title = _("Message from %s") % message.nick
                 self.send_notification(title, text)
@@ -504,15 +504,18 @@ class App(Gtk.Application):
     def on_tray_quit(self, widget):
         self.quit()
 
+    def is_window_focused(self):
+        focused = False
+        try:
+            focused = self.window.get_window().get_state() & Gdk.WindowState.FOCUSED
+        except:
+            focused = self.window.is_active() and self.window.get_visible()
+        return focused
+
     def on_tray_activated(self, icon, button, time):
         if button == Gdk.BUTTON_PRIMARY:
             self.tray.set_icon_name("jargonaut-status-normal-symbolic")
-            try:
-                focused = self.window.get_window().get_state() & Gdk.WindowState.FOCUSED
-            except:
-                focused = self.window.is_active() and self.window.get_visible()
-
-            if focused:
+            if self.is_window_focused():
                 self.window.hide()
             else:
                 self.window.show()
