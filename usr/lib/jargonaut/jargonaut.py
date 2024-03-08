@@ -116,6 +116,7 @@ class App(Gtk.Application):
         bind_switch_widget(self.builder.get_object("pref_dark"), self.settings, "prefer-dark-mode", fn_callback=self.update_dark_mode)
 
         self.webview = WebKit2.WebView()
+        self.webview.get_settings().set_hardware_acceleration_policy(WebKit2.HardwareAccelerationPolicy.NEVER)
         self.webview.connect("decide-policy", self.on_decide_policy)
         self.webview.show()
         self.render_html()
