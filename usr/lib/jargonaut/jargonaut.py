@@ -3,7 +3,10 @@
 import gi
 gi.require_version('Gtk', '3.0')
 gi.require_version('Notify', '0.7')
-gi.require_version('WebKit2', '4.1')
+try:
+    gi.require_version('WebKit2', '4.1')
+except:
+    gi.require_version('WebKit2', '4.0')
 gi.require_version('XApp', '1.0')
 from gi.repository import Gtk, Gio, GLib, Gdk, Notify, WebKit2, XApp
 import irc.client
