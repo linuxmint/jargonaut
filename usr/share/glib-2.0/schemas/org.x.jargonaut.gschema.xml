@@ -22,7 +22,10 @@
     <key name="prefer-dark-mode" type="b">
       <default>true</default>
     </key>
-      <key name="debug" type="b">
+    <key name="user-list-visible" type="b">
+      <default>true</default>
+    </key>
+    <key name="debug" type="b">
       <default>false</default>
       <summary>Whether to print debug information to stdout</summary>
     </key>

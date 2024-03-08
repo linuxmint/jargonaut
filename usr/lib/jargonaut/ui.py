@@ -54,6 +54,11 @@ def build_menu(app, window, menu):
         accel_group = Gtk.AccelGroup()
         window.add_accel_group(accel_group)
         item = Gtk.ImageMenuItem()
+        item.set_label(_("Preferences"))
+        item.connect("activate", open_preferences, app)
+        menu.append(item)
+        menu.append(Gtk.SeparatorMenuItem())
+        item = Gtk.ImageMenuItem()
         item.set_image(Gtk.Image.new_from_icon_name("preferences-desktop-keyboard-shortcuts-symbolic", Gtk.IconSize.MENU))
         item.set_label(_("Keyboard Shortcuts"))
         item.connect("activate", open_keyboard_shortcuts)
@@ -109,6 +114,10 @@ def open_about(widget, window):
 
         dlg.connect("response", close)
         dlg.show()
+
+def open_preferences(widget, app):
+        app.builder.get_object("main_stack").set_visible_child_name("page_settings")
+        app.builder.get_object("back_button").set_visible(True)
 
 def open_keyboard_shortcuts(widget):
         gladefile = "/usr/share/jargonaut/shortcuts.ui"

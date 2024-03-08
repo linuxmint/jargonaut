@@ -83,7 +83,7 @@ class App(Gtk.Application):
         self.window = self.builder.get_object("main_window")
         self.window.set_application(self)
         self.window.connect("delete_event", self.close_window)
-        self.window.show_all()
+        self.window.show()
 
         css_provider = Gtk.CssProvider()
         css_provider.load_from_path("/usr/share/jargonaut/style.css")
@@ -92,6 +92,10 @@ class App(Gtk.Application):
             css_provider,
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
         )
+
+        # Users button
+        self.builder.get_object("users_button").connect("clicked", self.on_users_button_clicked)
+        self.builder.get_object("back_button").connect("clicked", self.on_back_button_clicked)
 
         # Tray
         menu = Gtk.Menu()
@@ -128,6 +132,7 @@ class App(Gtk.Application):
         self.user_store = Gtk.ListStore(str, str) # nick, raw_nick
         self.user_treeview.set_model(self.user_store)
         self.user_store.set_sort_column_id(1, Gtk.SortType.ASCENDING)
+        self.user_treeview.set_visible(self.settings.get_boolean("user-list-visible"))
 
         completion = Gtk.EntryCompletion()
         completion.set_model(self.user_store)
@@ -148,8 +153,6 @@ class App(Gtk.Application):
 
         self.assign_color(self.nickname)
         self.builder.get_object("label_username").set_markup(self.nickname)
-
-        self.builder.get_object("channel_stack").connect("notify::visible-child-name", self.on_page_changed)
 
         self.client = irc.client.SimpleIRCClient()
         self.client.connection.add_global_handler("welcome", self.on_welcome)
@@ -450,14 +453,7 @@ class App(Gtk.Application):
     def update_users(self):
         self.user_store.clear()
         users = self.channel_users[self.channel]
-        box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=5)
-        icon = Gtk.Image.new_from_icon_name("system-users-symbolic", Gtk.IconSize.MENU)
-        box.pack_start(icon, True, True, 0)
-        box.pack_start(Gtk.Label(label=len(users)), True, True, 0)
-        column = self.user_treeview.get_column(0)
-        column.set_widget(box)
-        column.set_alignment(0.5)
-        box.show_all()
+        self.builder.get_object("users_label").set_text(str(len(users)))
         for user in users:
             self.user_store.append([self.get_nick_markup(user), user])
 
@@ -516,6 +512,15 @@ class App(Gtk.Application):
             focused = self.window.is_active() and self.window.get_visible()
         return focused
 
+    def on_back_button_clicked(self, widget):
+        self.builder.get_object("main_stack").set_visible_child_name("page_chat")
+        self.builder.get_object("back_button").set_visible(False)
+
+    def on_users_button_clicked(self, widget):
+        visible = self.user_treeview.get_visible()
+        self.settings.set_boolean("user-list-visible", not visible)
+        self.user_treeview.set_visible(not visible)
+
     def on_tray_activated(self, icon, button, time):
         if button == Gdk.BUTTON_PRIMARY:
             self.tray.set_icon_name("jargonaut-status-normal-symbolic")
@@ -524,13 +529,6 @@ class App(Gtk.Application):
             else:
                 self.window.show()
                 self.window.present_with_time(time)
-
-    def on_page_changed(self, stack, param):
-        if stack.get_visible_child_name() in ["page_questions", "page_discussion"]:
-            self.builder.get_object("entry_box").show_all()
-            GLib.idle_add(self.entry.grab_focus)
-        else:
-            self.builder.get_object("entry_box").set_visible(False)
 
     @idle
     def update_dark_mode(self, active):
