@@ -15,6 +15,7 @@ import getpass
 import gettext
 import html
 import locale
+import os
 import random
 import random
 import re
@@ -121,7 +122,8 @@ class App(Gtk.Application):
         bind_switch_widget(self.builder.get_object("pref_dark"), self.settings, "prefer-dark-mode", fn_callback=self.update_dark_mode)
 
         self.webview = WebKit2.WebView()
-        self.webview.get_settings().set_hardware_acceleration_policy(WebKit2.HardwareAccelerationPolicy.NEVER)
+        self.webview.get_settings().props.enable_webgl = False
+        # self.webview.get_settings().set_hardware_acceleration_policy(WebKit2.HardwareAccelerationPolicy.NEVER)
         self.webview.connect("decide-policy", self.on_decide_policy)
         self.webview.show()
         self.render_html()
@@ -132,7 +134,16 @@ class App(Gtk.Application):
         self.user_store = Gtk.ListStore(str, str) # nick, raw_nick
         self.user_treeview.set_model(self.user_store)
         self.user_store.set_sort_column_id(1, Gtk.SortType.ASCENDING)
-        self.user_treeview.set_visible(self.settings.get_boolean("user-list-visible"))
+
+        self.user_list_sw = self.builder.get_object("treeview_users_sw")
+        self.user_list_box = self.builder.get_object("user_list_box")
+        self.user_list_box.set_visible(self.settings.get_boolean("user-list-visible"))
+        self.current_paned_position = 0
+
+        self.main_stack = self.builder.get_object("main_stack")
+        # self.main_stack.connect("notify::visible-child-name", self.on_stack_page_changed)
+
+        self.chat_paned = self.builder.get_object("chat_paned")
 
         completion = Gtk.EntryCompletion()
         completion.set_model(self.user_store)
@@ -168,7 +179,11 @@ class App(Gtk.Application):
         self.client.connection.add_global_handler("disconnect", self.on_disconnect)
         self.client.connection.add_global_handler("error", self.on_error)
         self.client.connection.add_global_handler("nicknameinuse", self.on_nicknameinuse)
-        self.connect_to_server()
+
+        if os.environ.get("JARGONAUT_NO_SERVER_TEST", False):
+            self.main_stack.set_visible_child_name("page_chat")
+        else:
+            self.connect_to_server()
 
 #########################
 # Nickname/user functions
@@ -259,6 +274,8 @@ class App(Gtk.Application):
     def on_join(self, connection, event):
         self.print_info(f"Joined channel: target={event.target} source={event.source}")
         self.builder.get_object("main_stack").set_visible_child_name("page_chat")
+        self.size_user_list()
+        self.entry.grab_focus()
         nick = event.source.nick
         channel = event.target
         if nick not in self.channel_users[channel]:
@@ -512,14 +529,21 @@ class App(Gtk.Application):
             focused = self.window.is_active() and self.window.get_visible()
         return focused
 
+    @idle
+    def size_user_list(self):
+        stored_sidebar_width = self.settings.get_int("sidebar-width")
+        paned_max = self.chat_paned.props.max_position
+        self.chat_paned.set_position(paned_max + self.user_list_sw.get_min_content_width() - stored_sidebar_width)
+
     def on_back_button_clicked(self, widget):
         self.builder.get_object("main_stack").set_visible_child_name("page_chat")
         self.builder.get_object("back_button").set_visible(False)
+        self.entry.grab_focus()
 
     def on_users_button_clicked(self, widget):
-        visible = self.user_treeview.get_visible()
+        visible = self.user_list_box.get_visible()
         self.settings.set_boolean("user-list-visible", not visible)
-        self.user_treeview.set_visible(not visible)
+        self.user_list_box.set_visible(not visible)
 
     def on_tray_activated(self, icon, button, time):
         if button == Gdk.BUTTON_PRIMARY:
@@ -607,11 +631,16 @@ class App(Gtk.Application):
 
     def do_startup(self):
         Gtk.Application.do_startup(self)
-        self.connect("shutdown", self.on_shutdown)
 
-    def on_shutdown(self, application):
+    def do_shutdown(self):
         if self.is_connected:
             self.disconnect()
+
+        # 50 is our minimum content width for the user list scrolled window,
+        # so that needs to be accounted for, because max_position is affected by it.
+        saved_width = self.chat_paned.props.max_position + self.user_list_sw.get_min_content_width() - self.chat_paned.get_position()
+        self.settings.set_int("sidebar-width", saved_width)
+        Gtk.Application.do_shutdown(self)
 
 app = App()
 app.run()

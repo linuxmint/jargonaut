@@ -29,5 +29,10 @@
       <default>false</default>
       <summary>Whether to print debug information to stdout</summary>
     </key>
+    <key name="sidebar-width" type="i">
+      <range min="0" max="99999"/>
+      <default>150</default>
+    </key>
+
   </schema>
 </schemalist>
