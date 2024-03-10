@@ -104,8 +104,9 @@ img {
 
 .date {
     color: #848b95;
-    font-size: 0.7em;
+    font-size: 0.6em;
     margin-left: 10px;
+    font-weight: normal;
 }
 
 .response {

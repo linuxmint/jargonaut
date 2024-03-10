@@ -24,7 +24,7 @@ import ssl
 import webbrowser
 from irc.connection import Factory
 from settings import bind_entry_widget, bind_switch_widget
-from ui import build_menu, idle, _async, color_palette
+from ui import build_menu, idle, _async, color_palette, format_timespan, get_span_minutes
 
 # i18n
 APP = "jargonaut"
@@ -41,6 +41,8 @@ class Message():
     def __init__(self, nick, text):
         self.nick = nick
         self.text = text
+        self.time = GLib.DateTime.new_now_local()
+
 class App(Gtk.Application):
     def __init__(self):
         super().__init__(application_id="org.x.jargonaut")
@@ -66,6 +68,8 @@ class App(Gtk.Application):
         self.channel_users = {}
         self.channel_users[self.channel] = []
         self.messages = []
+
+        self.refresh_id = 0
 
         prefer_dark_mode = self.settings.get_boolean("prefer-dark-mode")
         try:
@@ -122,8 +126,7 @@ class App(Gtk.Application):
         bind_switch_widget(self.builder.get_object("pref_dark"), self.settings, "prefer-dark-mode", fn_callback=self.update_dark_mode)
 
         self.webview = WebKit2.WebView()
-        self.webview.get_settings().props.enable_webgl = False
-        # self.webview.get_settings().set_hardware_acceleration_policy(WebKit2.HardwareAccelerationPolicy.NEVER)
+        self.webview.get_settings().set_hardware_acceleration_policy(WebKit2.HardwareAccelerationPolicy.NEVER)
         self.webview.connect("decide-policy", self.on_decide_policy)
         self.webview.show()
         self.render_html()
@@ -285,6 +288,21 @@ class App(Gtk.Application):
         if nick == self.nickname:
             self.identify(connection)
 
+        self.run_refresh_timer()
+
+    def run_refresh_timer(self):
+        self.stop_refresh_timer()
+        self.refresh_id = GLib.timeout_add_seconds(30, self.refresh_timer_up)
+
+    def refresh_timer_up(self):
+        self.render_html()
+        return GLib.SOURCE_CONTINUE
+
+    def stop_refresh_timer(self):
+        if self.refresh_id > 0:
+            GLib.source_remove(self.refresh_id)
+            self.refresh_id = 0
+
     @idle
     def on_namreply(self, connection, event):
         channel = event.arguments[1]
@@ -388,7 +406,13 @@ class App(Gtk.Application):
     def render_html(self):
         messages_section = "<div>"
         last_nick = ""
+        last_message_time = None
+        minutes_since_previous_message = 0
         for message in self.messages:
+            if last_message_time is not None:
+                minutes_since_previous_message = get_span_minutes(message.time, last_message_time)
+            last_message_time = message.time
+            date = format_timespan(message.time)
             mine = ""
             response = ""
             nickname = message.nick
@@ -403,7 +427,7 @@ class App(Gtk.Application):
                 mine = "mine"
             elif self.nickname.lower() in words or (self.nickname+":").lower() in words or ("@"+self.nickname).lower() in words:
                 response = "response"
-            if message.nick == last_nick:
+            if message.nick == last_nick and minutes_since_previous_message < 3:
                 messages_section += f"""
                         <div class="line {response}">{text}</div>
                     """
@@ -412,7 +436,7 @@ class App(Gtk.Application):
                     </div>
                     <div class="messages {mine}">
                         <span class="avatar"><span style="background-color:{color}">{letter}</span></span>
-                        <div class="nick">{nickname}<span class="date"></span></div>
+                        <div class="nick">{nickname}<span class="date">{date}</span></div>
                         <div class="line {response}">{text}</div>
                     """
             last_nick = message.nick
@@ -633,6 +657,8 @@ class App(Gtk.Application):
         Gtk.Application.do_startup(self)
 
     def do_shutdown(self):
+        self.stop_refresh_timer()
+
         if self.is_connected:
             self.disconnect()
 
