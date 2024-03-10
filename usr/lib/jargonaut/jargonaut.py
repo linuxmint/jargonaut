@@ -17,7 +17,6 @@ import html
 import locale
 import os
 import random
-import random
 import re
 import setproctitle
 import ssl
@@ -38,10 +37,12 @@ setproctitle.setproctitle("jargonaut")
 Notify.init(_("Chat Room"))
 
 class Message():
-    def __init__(self, nick, text):
+    def __init__(self, nick, text, action=None, old_nick=None):
         self.nick = nick
         self.text = text
         self.time = GLib.DateTime.new_now_local()
+        self.action = action
+        self.old_nick = old_nick
 
 class App(Gtk.Application):
     def __init__(self):
@@ -68,8 +69,6 @@ class App(Gtk.Application):
         self.channel_users = {}
         self.channel_users[self.channel] = []
         self.messages = []
-
-        self.refresh_id = 0
 
         prefer_dark_mode = self.settings.get_boolean("prefer-dark-mode")
         try:
@@ -276,9 +275,6 @@ class App(Gtk.Application):
     @idle
     def on_join(self, connection, event):
         self.print_info(f"Joined channel: target={event.target} source={event.source}")
-        self.builder.get_object("main_stack").set_visible_child_name("page_chat")
-        self.size_user_list()
-        self.entry.grab_focus()
         nick = event.source.nick
         channel = event.target
         if nick not in self.channel_users[channel]:
@@ -286,22 +282,14 @@ class App(Gtk.Application):
             self.channel_users[channel].append(nick)
             self.update_users()
         if nick == self.nickname:
+            self.builder.get_object("main_stack").set_visible_child_name("page_chat")
+            self.size_user_list()
+            self.entry.grab_focus()
             self.identify(connection)
-
-        self.run_refresh_timer()
-
-    def run_refresh_timer(self):
-        self.stop_refresh_timer()
-        self.refresh_id = GLib.timeout_add_seconds(30, self.refresh_timer_up)
-
-    def refresh_timer_up(self):
-        self.render_html()
-        return GLib.SOURCE_CONTINUE
-
-    def stop_refresh_timer(self):
-        if self.refresh_id > 0:
-            GLib.source_remove(self.refresh_id)
-            self.refresh_id = 0
+        else:
+            message = Message(nick, None, "join")
+            self.messages.append(message)
+            self.render_html()
 
     @idle
     def on_namreply(self, connection, event):
@@ -337,6 +325,11 @@ class App(Gtk.Application):
             self.builder.get_object("label_username").set_markup(new_nick)
         self.update_users()
 
+        if new_nick != self.nickname:
+            message = Message(new_nick, None, "nick", event.source.nick)
+            self.messages.append(message)
+            self.render_html()
+
     @idle
     def on_quit(self, connection, event):
         self.print_info(f"Quit: target={event.target} source={event.source}")
@@ -346,6 +339,11 @@ class App(Gtk.Application):
             self.channel_users[self.channel].remove(nick)
             self.update_users()
 
+        if nick != self.nickname:
+            message = Message(nick, None, "quit")
+            self.messages.append(message)
+            self.render_html()
+
     @idle
     def on_part(self, connection, event):
         self.print_info(f"Part: target={event.target} source={event.source}")
@@ -354,6 +352,11 @@ class App(Gtk.Application):
         if nick in self.channel_users[channel]:
             self.channel_users[channel].remove(nick)
             self.update_users()
+
+        if nick != self.nickname:
+            message = Message(nick, None, "quit")
+            self.messages.append(message)
+            self.render_html()
 
     @idle
     def on_all_raw_messages(self, connection, event):
@@ -418,16 +421,34 @@ class App(Gtk.Application):
             nickname = message.nick
             letter = nickname[0].upper()
             color = self.user_colors[nickname]
-            text = message.text
-            words = text.lower().split(" ")
-            if text.startswith("\x01ACTION") and text.endswith("\x01"):
-                text = text.replace("\x01ACTION", "").replace("\x01", "")
-                text = f"<i><-- {text}</i>"
-            if message.nick == self.nickname:
-                mine = "mine"
-            elif self.nickname.lower() in words or (self.nickname+":").lower() in words or ("@"+self.nickname).lower() in words:
-                response = "response"
-            if message.nick == last_nick and minutes_since_previous_message < 3:
+
+            if message.text is not None:
+                text = message.text
+                words = text.lower().split(" ")
+                if text.startswith("\x01ACTION") and text.endswith("\x01"):
+                    text = text.replace("\x01ACTION", "").replace("\x01", "")
+                    text = f"<i><-- {text}</i>"
+                if message.nick == self.nickname:
+                    mine = "mine"
+                elif self.nickname.lower() in words or (self.nickname+":").lower() in words or ("@"+self.nickname).lower() in words:
+                    response = "response"
+                print(minutes_since_previous_message, text)
+
+            if message.action is not None:
+                if message.action == "join":
+                    action_message = _(f"{nickname} joined the channel")
+                elif message.action == "quit":
+                    action_message = _(f"{nickname} left the channel")
+                elif message.action == "nick":
+                    action_message = _(f"{message.old_nick} is now {nickname}")
+
+                messages_section += f"""
+                    <div class="action">
+                        <div class="action-text">{action_message}</div>
+                    </div>
+                """
+                
+            elif message.nick == last_nick and minutes_since_previous_message < 3:
                 messages_section += f"""
                         <div class="line {response}">{text}</div>
                     """
@@ -439,7 +460,9 @@ class App(Gtk.Application):
                         <div class="nick">{nickname}<span class="date">{date}</span></div>
                         <div class="line {response}">{text}</div>
                     """
-            last_nick = message.nick
+            # ignore parts/joins with respect to chat continuity
+            if message.action is None:
+                last_nick = message.nick
 
         html = f"""
 <html>
@@ -657,8 +680,6 @@ class App(Gtk.Application):
         Gtk.Application.do_startup(self)
 
     def do_shutdown(self):
-        self.stop_refresh_timer()
-
         if self.is_connected:
             self.disconnect()
 
