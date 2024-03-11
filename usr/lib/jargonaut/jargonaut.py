@@ -123,9 +123,10 @@ class App(Gtk.Application):
         bind_entry_widget(self.builder.get_object("pref_nickname"), self.settings, "nickname")
         bind_entry_widget(self.builder.get_object("pref_password"), self.settings, "password")
         bind_switch_widget(self.builder.get_object("pref_dark"), self.settings, "prefer-dark-mode", fn_callback=self.update_dark_mode)
+        bind_switch_widget(self.builder.get_object("pref_acceleration"), self.settings, "hw-acceleration", fn_callback=self.update_hw_acceleration)
 
         self.webview = WebKit2.WebView()
-        self.webview.get_settings().set_hardware_acceleration_policy(WebKit2.HardwareAccelerationPolicy.NEVER)
+        self.update_hw_acceleration(self.settings.get_boolean("hw-acceleration"))
         self.webview.connect("decide-policy", self.on_decide_policy)
         self.webview.show()
         self.render_html()
@@ -597,6 +598,14 @@ class App(Gtk.Application):
             else:
                 self.window.show()
                 self.window.present_with_time(time)
+
+    def update_hw_acceleration(self, active):
+        settings = self.webview.get_settings()
+        if active:
+            policy = WebKit2.HardwareAccelerationPolicy.ALWAYS
+        else:
+            policy = WebKit2.HardwareAccelerationPolicy.NEVER
+        settings.set_hardware_acceleration_policy(policy)
 
     @idle
     def update_dark_mode(self, active):

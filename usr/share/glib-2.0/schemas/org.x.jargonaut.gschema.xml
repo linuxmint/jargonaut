@@ -29,5 +29,9 @@
       <default>false</default>
       <summary>Whether to print debug information to stdout</summary>
     </key>
+    <key name="hw-acceleration" type="b">
+      <default>false</default>
+      <summary>WebKit2 HW Acceleration</summary>
+    </key>
   </schema>
 </schemalist>
