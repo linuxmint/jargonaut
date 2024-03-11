@@ -143,7 +143,6 @@ class App(Gtk.Application):
         self.current_paned_position = 0
 
         self.main_stack = self.builder.get_object("main_stack")
-        # self.main_stack.connect("notify::visible-child-name", self.on_stack_page_changed)
 
         self.chat_paned = self.builder.get_object("chat_paned")
 
