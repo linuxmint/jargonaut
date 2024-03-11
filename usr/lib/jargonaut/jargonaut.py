@@ -156,8 +156,13 @@ class App(Gtk.Application):
         self.entry.set_completion(completion)
         self.entry.connect("key-press-event", self.on_key_press_event)
 
+        checker = Gspell.Checker()
+        language = Gspell.Language.lookup("en_US")
+        checker.set_language(language)
+        buffer = Gspell.EntryBuffer.get_from_gtk_entry_buffer(self.entry.get_buffer())
+        buffer.set_spell_checker(checker)
         gspell_entry = Gspell.Entry.get_from_gtk_entry(self.entry)
-        gspell_entry.basic_setup()
+        gspell_entry.set_inline_spell_checking(True)
 
         renderer = Gtk.CellRendererText()
         col = Gtk.TreeViewColumn("Users", renderer, markup=0)
