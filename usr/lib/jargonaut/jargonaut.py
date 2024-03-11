@@ -137,7 +137,6 @@ class App(Gtk.Application):
         self.user_treeview.set_model(self.user_store)
         self.user_store.set_sort_column_id(1, Gtk.SortType.ASCENDING)
 
-        self.user_list_sw = self.builder.get_object("treeview_users_sw")
         self.user_list_box = self.builder.get_object("user_list_box")
         self.user_list_box.set_visible(self.settings.get_boolean("user-list-visible"))
         self.current_paned_position = 0
@@ -283,7 +282,6 @@ class App(Gtk.Application):
             self.update_users()
         if nick == self.nickname:
             self.builder.get_object("main_stack").set_visible_child_name("page_chat")
-            self.size_user_list()
             self.entry.grab_focus()
             self.identify(connection)
         else:
@@ -576,12 +574,6 @@ class App(Gtk.Application):
             focused = self.window.is_active() and self.window.get_visible()
         return focused
 
-    @idle
-    def size_user_list(self):
-        stored_sidebar_width = self.settings.get_int("sidebar-width")
-        paned_max = self.chat_paned.props.max_position
-        self.chat_paned.set_position(paned_max + self.user_list_sw.get_min_content_width() - stored_sidebar_width)
-
     def on_back_button_clicked(self, widget):
         self.builder.get_object("main_stack").set_visible_child_name("page_chat")
         self.builder.get_object("back_button").set_visible(False)
@@ -683,10 +675,6 @@ class App(Gtk.Application):
         if self.is_connected:
             self.disconnect()
 
-        # 50 is our minimum content width for the user list scrolled window,
-        # so that needs to be accounted for, because max_position is affected by it.
-        saved_width = self.chat_paned.props.max_position + self.user_list_sw.get_min_content_width() - self.chat_paned.get_position()
-        self.settings.set_int("sidebar-width", saved_width)
         Gtk.Application.do_shutdown(self)
 
 app = App()
