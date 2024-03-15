@@ -418,15 +418,15 @@ class App(Gtk.Application):
         self.webview.load_html(html, "file:///usr/share/jargonaut/")
 
     @idle
-    def print_message(self, nick, text):
+    def print_message(self, nick, message):
         # Escape any tags, i.e. show exactly what people typed, don't let Webkit interpret it.
-        new_text = html.escape(text)
         # Format text (IRC codes -> pango/HTML)
-        new_text = re.sub(r'\x02(.*?)\x02', r'<b>\1</b>', new_text)
-        new_text = re.sub(r'\x16(.*?)\x16', r'<i>\1</i>', new_text)
-        new_text = re.sub(r'\x1D(.*?)\x1D', r'<i>\1</i>', new_text)
-        new_text = re.sub(r'\x1F(.*?)\x1F', r'<u>\1</u>', new_text)
-        new_text = re.sub(r'\x1E(.*?)\x1E', r'<s>\1</s>', new_text)
+        text = html.escape(message)
+        text = re.sub(r'\x02(.*?)\x02', r'<b>\1</b>', text)
+        text = re.sub(r'\x16(.*?)\x16', r'<i>\1</i>', text)
+        text = re.sub(r'\x1D(.*?)\x1D', r'<i>\1</i>', text)
+        text = re.sub(r'\x1F(.*?)\x1F', r'<u>\1</u>', text)
+        text = re.sub(r'\x1E(.*?)\x1E', r'<s>\1</s>', text)
         # Convert URLs to clickable links
         url_pattern = r'((http[s]?://[^\s]{3,}\.[^\s]{2,}))'
         def repl(match):
@@ -435,19 +435,19 @@ class App(Gtk.Application):
                 return f'<a href="{url}"><img class="thumb" src="{url}" title="{url}"/></a>'
             else:
                 return f'<a href="{url}">{url}</a>'
-        new_text = re.sub(url_pattern, repl, new_text)
+        text = re.sub(url_pattern, repl, text)
 
-        message = Message(nick, new_text)
-        self.messages.append(message)
+        _message = Message(nick, text)
+        self.messages.append(_message)
         self.render_html()
         self.last_message_nick = nick
 
-        words = new_text.lower().split(" ")
+        words = text.lower().split(" ")
         if self.nickname.lower() in words or (self.nickname+":").lower() in words or ("@"+self.nickname).lower() in words:
             if not self.is_window_focused():
                 self.tray.set_icon_name("jargonaut-status-msg-symbolic")
                 title = _("Message from %s") % message.nick
-                self.send_notification(title, text) # preserving the original text on the notification
+                self.send_notification(title, message)
 
     @idle
     def update_users(self):
