@@ -420,8 +420,8 @@ class App(Gtk.Application):
     @idle
     def print_message(self, nick, message):
         # Escape any tags, i.e. show exactly what people typed, don't let Webkit interpret it.
-        # Format text (IRC codes -> pango/HTML)
         text = html.escape(message)
+        # Format text (IRC codes -> pango/HTML)
         text = re.sub(r'\x02(.*?)\x02', r'<b>\1</b>', text)
         text = re.sub(r'\x16(.*?)\x16', r'<i>\1</i>', text)
         text = re.sub(r'\x1D(.*?)\x1D', r'<i>\1</i>', text)
