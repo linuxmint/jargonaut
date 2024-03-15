@@ -446,7 +446,7 @@ class App(Gtk.Application):
         if self.nickname.lower() in words or (self.nickname+":").lower() in words or ("@"+self.nickname).lower() in words:
             if not self.is_window_focused():
                 self.tray.set_icon_name("jargonaut-status-msg-symbolic")
-                title = _("Message from %s") % message.nick
+                title = _("Message from %s") % _message.nick
                 self.send_notification(title, message)
 
     @idle
