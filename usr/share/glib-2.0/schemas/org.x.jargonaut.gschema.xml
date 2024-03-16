@@ -33,5 +33,9 @@
       <default>false</default>
       <summary>WebKit2 HW Acceleration</summary>
     </key>
+    <key name="show-thumbs" type="b">
+      <default>false</default>
+      <summary>Whether to show thumbnails or not</summary>
+    </key>
   </schema>
 </schemalist>
