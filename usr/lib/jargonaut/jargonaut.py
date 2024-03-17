@@ -542,6 +542,14 @@ class App(Gtk.Application):
 
         self.webview.load_html(html, "file:///usr/share/jargonaut/")
 
+    def is_image_url(url):
+        image = url.split('/')[:-1]
+        image = image.split('?')[0]
+        if image.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.svg', '.bmp', '.webp')):
+            return True
+        else:
+            return False
+
     @idle
     def print_message(self, nick, text):
         # Escape any tags, i.e. show exactly what people typed, don't let Webkit interpret it.
@@ -556,7 +564,7 @@ class App(Gtk.Application):
         url_pattern = r'((http[s]?://[^\s]{3,}\.[^\s]{2,}))'
         def repl(match):
             url = match.group(1)
-            if url.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.svg', '.bmp', '.webp')) and self.show_thumbs:
+            if self.is_image_url(url) and self.show_thumbs:
                 return f'<a href="{url}"><img class="thumb" src="{url}" title="{url}"/></a>'
             else:
                 return f'<a href="{url}">{url}</a>'
