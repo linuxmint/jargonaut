@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.38.2 -->
+<!-- Generated with glade 3.40.0 -->
 <interface>
   <requires lib="gtk+" version="3.20"/>
+  <object class="GtkImage" id="image1">
+    <property name="visible">True</property>
+    <property name="can-focus">False</property>
+    <property name="icon-name">go-previous-symbolic</property>
+  </object>
   <object class="GtkMenu" id="main_menu">
     <property name="visible">True</property>
     <property name="can-focus">False</property>
@@ -102,18 +107,41 @@
                                 <property name="visible">True</property>
                                 <property name="can-focus">False</property>
                                 <child>
-                                  <object class="GtkBox" id="webview_box">
+                                  <object class="GtkOverlay">
                                     <property name="visible">True</property>
                                     <property name="can-focus">False</property>
-                                    <property name="orientation">vertical</property>
                                     <child>
-                                      <placeholder/>
+                                      <object class="GtkBox" id="webview_box">
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                        <property name="orientation">vertical</property>
+                                        <child>
+                                          <placeholder/>
+                                        </child>
+                                      </object>
+                                      <packing>
+                                        <property name="index">-1</property>
+                                      </packing>
+                                    </child>
+                                    <child type="overlay">
+                                      <object class="GtkButton" id="scrollback_return_button">
+                                        <property name="label" translatable="yes">5 new messages</property>
+                                        <property name="can-focus">True</property>
+                                        <property name="receives-default">True</property>
+                                        <property name="no-show-all">True</property>
+                                        <property name="tooltip-text" translatable="yes">Click to see new messages</property>
+                                        <property name="halign">center</property>
+                                        <property name="valign">end</property>
+                                        <property name="margin-bottom">4</property>
+                                        <property name="image-position">right</property>
+                                        <property name="always-show-image">True</property>
+                                      </object>
                                     </child>
                                   </object>
                                   <packing>
                                     <property name="expand">True</property>
                                     <property name="fill">True</property>
-                                    <property name="position">0</property>
+                                    <property name="position">1</property>
                                   </packing>
                                 </child>
                                 <child>
@@ -388,9 +416,9 @@
                 <property name="border-width">0</property>
                 <property name="orientation">vertical</property>
                 <child>
-                  <object class="GtkInfoBar">
-                    <property name="visible">True</property>
+                  <object class="GtkInfoBar" id="prefs_restart_infobar">
                     <property name="can-focus">False</property>
+                    <property name="no-show-all">True</property>
                     <child internal-child="action_area">
                       <object class="GtkButtonBox">
                         <property name="can-focus">False</property>
@@ -420,7 +448,7 @@
                           <object class="GtkLabel">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
-                            <property name="label" translatable="yes">Restart the application for some of the settings to take effect.</property>
+                            <property name="label" translatable="yes">Restart the application for changes to take effect.</property>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -452,7 +480,7 @@
                   </packing>
                 </child>
                 <child>
-                  <!-- n-columns=2 n-rows=6 -->
+                  <!-- n-columns=2 n-rows=7 -->
                   <object class="GtkGrid">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
@@ -584,7 +612,7 @@
                         <property name="can-focus">False</property>
                         <property name="halign">start</property>
                         <property name="valign">center</property>
-                        <property name="label" translatable="yes">Show Thumbnails</property>
+                        <property name="label" translatable="yes">Use 24h clock</property>
                         <attributes>
                           <attribute name="weight" value="bold"/>
                         </attributes>
@@ -595,7 +623,7 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkSwitch" id="show_thumbs">
+                      <object class="GtkSwitch" id="pref_24h">
                         <property name="visible">True</property>
                         <property name="can-focus">True</property>
                         <property name="halign">start</property>
@@ -666,13 +694,8 @@
           <object class="GtkButton" id="back_button">
             <property name="can-focus">True</property>
             <property name="receives-default">True</property>
-            <child>
-              <object class="GtkImage">
-                <property name="visible">True</property>
-                <property name="can-focus">False</property>
-                <property name="icon-name">go-previous-symbolic</property>
-              </object>
-            </child>
+            <property name="no-show-all">True</property>
+            <property name="image">image1</property>
           </object>
           <packing>
             <property name="position">1</property>

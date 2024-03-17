@@ -126,3 +126,8 @@ img {
     padding-bottom: .1em;
     text-align: right;
 }
+
+hr.solid
+.separator {
+    border-top: 1px #848b95;
+}
