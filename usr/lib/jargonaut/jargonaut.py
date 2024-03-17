@@ -547,8 +547,6 @@ class App(Gtk.Application):
         image = image.split('?')[0]
         if image.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.svg', '.bmp', '.webp')):
             return True
-        else:
-            return False
 
     @idle
     def print_message(self, nick, text):
