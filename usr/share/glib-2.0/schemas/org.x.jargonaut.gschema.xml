@@ -33,5 +33,8 @@
       <default>false</default>
       <summary>WebKit2 HW Acceleration</summary>
     </key>
+    <key name="timestamp-24h" type="b">
+      <default>true</default>
+    </key>
   </schema>
 </schemalist>

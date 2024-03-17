@@ -123,10 +123,15 @@ class App(Gtk.Application):
         menu = self.builder.get_object("main_menu")
         build_menu(self, self.window, menu)
 
+        self.main_stack = self.builder.get_object("main_stack")
+
         # Settings widgets
-        bind_entry_widget(self.builder.get_object("pref_nickname"), self.settings, "nickname")
-        bind_entry_widget(self.builder.get_object("pref_password"), self.settings, "password")
+
         bind_switch_widget(self.builder.get_object("pref_dark"), self.settings, "prefer-dark-mode", fn_callback=self.update_dark_mode)
+        bind_switch_widget(self.builder.get_object("pref_24h"), self.settings, "timestamp-24h", fn_callback=self.update_timestamp_format)
+
+        bind_entry_widget(self.builder.get_object("pref_nickname"), self.settings, "nickname", fn_callback=self.show_restart_infobar)
+        bind_entry_widget(self.builder.get_object("pref_password"), self.settings, "password", fn_callback=self.show_restart_infobar),
         bind_switch_widget(self.builder.get_object("pref_acceleration"), self.settings, "hw-acceleration", fn_callback=self.update_hw_acceleration)
 
         self.webview = WebKit2.WebView()
@@ -149,7 +154,6 @@ class App(Gtk.Application):
         self.user_list_box.set_visible(self.settings.get_boolean("user-list-visible"))
         self.current_paned_position = 0
 
-        self.main_stack = self.builder.get_object("main_stack")
 
         self.chat_paned = self.builder.get_object("chat_paned")
 
@@ -468,7 +472,7 @@ class App(Gtk.Application):
             if last_message_time is not None:
                 minutes_since_previous_message = get_span_minutes(message.time, last_message_time)
             last_message_time = message.time
-            date = format_timespan(message.time)
+            date = format_timespan(message.time, self.settings.get_boolean("timestamp-24h"))
             mine = ""
             response = ""
             nickname = message.nick
@@ -663,10 +667,21 @@ class App(Gtk.Application):
         else:
             policy = WebKit2.HardwareAccelerationPolicy.NEVER
         settings.set_hardware_acceleration_policy(policy)
+        self.show_restart_infobar()
 
     @idle
     def update_dark_mode(self, active):
         Gtk.Settings.get_default().set_property("gtk-application-prefer-dark-theme", active)
+
+    def update_timestamp_format(self, active):
+        self.render_html()
+
+    def show_restart_infobar(self, *args, **kargs):
+        # avoid showing the info bar during init
+        if self.main_stack.get_visible_child_name() != "page_settings":
+            return
+
+        self.builder.get_object("prefs_restart_infobar").show()
 
     def on_key_press_event(self, widget, event):
         keyname = Gdk.keyval_name(event.keyval)
