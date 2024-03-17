@@ -36,5 +36,9 @@
     <key name="timestamp-24h" type="b">
       <default>true</default>
     </key>
+    <key name="show-thumbs" type="b">
+      <default>false</default>
+      <summary>Whether to show thumbnails or not</summary>
+    </key>
   </schema>
 </schemalist>
