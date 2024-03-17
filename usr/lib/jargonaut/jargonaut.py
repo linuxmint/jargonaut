@@ -543,7 +543,7 @@ class App(Gtk.Application):
         self.webview.load_html(html, "file:///usr/share/jargonaut/")
 
     def is_image_url(self,url):
-        image = url.split('/')[:-1]
+        image = url.split('/')[-1]
         image = image.split('?')[0]
         if image.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.svg', '.bmp', '.webp')):
             return True
