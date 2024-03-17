@@ -678,10 +678,7 @@ class App(Gtk.Application):
         self.show_restart_infobar()
 
     def update_show_thumbs(self, active):
-        if active:
-            self.show_thumbs = True
-        else:
-            self.show_thumbs = False
+            self.show_thumbs = True if active else False
 
     @idle
     def update_dark_mode(self, active):
