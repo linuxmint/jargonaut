@@ -15,7 +15,7 @@ import getpass
 import gettext
 import html
 import locale
-import random
+import os
 import random
 import re
 import setproctitle
@@ -23,7 +23,7 @@ import ssl
 import webbrowser
 from irc.connection import Factory
 from settings import bind_entry_widget, bind_switch_widget
-from ui import build_menu, idle, _async, color_palette
+from ui import build_menu, idle, _async, color_palette, format_timespan, get_span_minutes
 
 # i18n
 APP = "jargonaut"
@@ -37,9 +37,14 @@ setproctitle.setproctitle("jargonaut")
 Notify.init(_("Chat Room"))
 
 class Message():
-    def __init__(self, nick, text):
+    def __init__(self, nick, text, action=None, old_nick=None, separator=False):
         self.nick = nick
         self.text = text
+        self.time = GLib.DateTime.new_now_local()
+        self.action = action
+        self.old_nick = old_nick
+        self.separator = separator
+
 class App(Gtk.Application):
     def __init__(self):
         super().__init__(application_id="org.x.jargonaut")
@@ -65,6 +70,9 @@ class App(Gtk.Application):
         self.channel_users = {}
         self.channel_users[self.channel] = []
         self.messages = []
+        self.n_real_messages = 0
+        self.scrollback_queue_start_count = 0
+        self.separator_message = None
 
         prefer_dark_mode = self.settings.get_boolean("prefer-dark-mode")
         try:
@@ -115,24 +123,39 @@ class App(Gtk.Application):
         menu = self.builder.get_object("main_menu")
         build_menu(self, self.window, menu)
 
+        self.main_stack = self.builder.get_object("main_stack")
+
         # Settings widgets
-        bind_entry_widget(self.builder.get_object("pref_nickname"), self.settings, "nickname")
-        bind_entry_widget(self.builder.get_object("pref_password"), self.settings, "password")
+
         bind_switch_widget(self.builder.get_object("pref_dark"), self.settings, "prefer-dark-mode", fn_callback=self.update_dark_mode)
+        bind_switch_widget(self.builder.get_object("pref_24h"), self.settings, "timestamp-24h", fn_callback=self.update_timestamp_format)
+
+        bind_entry_widget(self.builder.get_object("pref_nickname"), self.settings, "nickname", fn_callback=self.show_restart_infobar)
+        bind_entry_widget(self.builder.get_object("pref_password"), self.settings, "password", fn_callback=self.show_restart_infobar),
+        bind_switch_widget(self.builder.get_object("pref_acceleration"), self.settings, "hw-acceleration", fn_callback=self.update_hw_acceleration)
 
         self.webview = WebKit2.WebView()
-        self.webview.get_settings().set_hardware_acceleration_policy(WebKit2.HardwareAccelerationPolicy.NEVER)
+        self.update_hw_acceleration(self.settings.get_boolean("hw-acceleration"))
         self.webview.connect("decide-policy", self.on_decide_policy)
         self.webview.show()
         self.render_html()
 
         self.builder.get_object("webview_box").pack_start(self.webview, True, True, 0)
 
+        self.scrollback_return_button = self.builder.get_object("scrollback_return_button")
+        self.scrollback_return_button.connect("clicked", self.on_scrollback_return_button_clicked)
+
         self.user_treeview = self.builder.get_object("treeview_users")
         self.user_store = Gtk.ListStore(str, str) # nick, raw_nick
         self.user_treeview.set_model(self.user_store)
         self.user_store.set_sort_column_id(1, Gtk.SortType.ASCENDING)
-        self.user_treeview.set_visible(self.settings.get_boolean("user-list-visible"))
+
+        self.user_list_box = self.builder.get_object("user_list_box")
+        self.user_list_box.set_visible(self.settings.get_boolean("user-list-visible"))
+        self.current_paned_position = 0
+
+
+        self.chat_paned = self.builder.get_object("chat_paned")
 
         completion = Gtk.EntryCompletion()
         completion.set_model(self.user_store)
@@ -144,8 +167,13 @@ class App(Gtk.Application):
         self.entry.set_completion(completion)
         self.entry.connect("key-press-event", self.on_key_press_event)
 
+        checker = Gspell.Checker()
+        language = Gspell.Language.lookup("en_US")
+        checker.set_language(language)
+        buffer = Gspell.EntryBuffer.get_from_gtk_entry_buffer(self.entry.get_buffer())
+        buffer.set_spell_checker(checker)
         gspell_entry = Gspell.Entry.get_from_gtk_entry(self.entry)
-        gspell_entry.basic_setup()
+        gspell_entry.set_inline_spell_checking(True)
 
         renderer = Gtk.CellRendererText()
         col = Gtk.TreeViewColumn("Users", renderer, markup=0)
@@ -168,7 +196,11 @@ class App(Gtk.Application):
         self.client.connection.add_global_handler("disconnect", self.on_disconnect)
         self.client.connection.add_global_handler("error", self.on_error)
         self.client.connection.add_global_handler("nicknameinuse", self.on_nicknameinuse)
-        self.connect_to_server()
+
+        if os.environ.get("JARGONAUT_NO_SERVER_TEST", False):
+            self.main_stack.set_visible_child_name("page_chat")
+        else:
+            self.connect_to_server()
 
 #########################
 # Nickname/user functions
@@ -258,7 +290,6 @@ class App(Gtk.Application):
     @idle
     def on_join(self, connection, event):
         self.print_info(f"Joined channel: target={event.target} source={event.source}")
-        self.builder.get_object("main_stack").set_visible_child_name("page_chat")
         nick = event.source.nick
         channel = event.target
         if nick not in self.channel_users[channel]:
@@ -266,7 +297,13 @@ class App(Gtk.Application):
             self.channel_users[channel].append(nick)
             self.update_users()
         if nick == self.nickname:
+            self.builder.get_object("main_stack").set_visible_child_name("page_chat")
+            self.entry.grab_focus()
             self.identify(connection)
+        else:
+            message = Message(nick, None, "join")
+            self.messages.append(message)
+            self.render_html()
 
     @idle
     def on_namreply(self, connection, event):
@@ -302,6 +339,11 @@ class App(Gtk.Application):
             self.builder.get_object("label_username").set_markup(new_nick)
         self.update_users()
 
+        if new_nick != self.nickname:
+            message = Message(new_nick, None, "nick", event.source.nick)
+            self.messages.append(message)
+            self.render_html()
+
     @idle
     def on_quit(self, connection, event):
         self.print_info(f"Quit: target={event.target} source={event.source}")
@@ -311,6 +353,11 @@ class App(Gtk.Application):
             self.channel_users[self.channel].remove(nick)
             self.update_users()
 
+        if nick != self.nickname:
+            message = Message(nick, None, "quit")
+            self.messages.append(message)
+            self.render_html()
+
     @idle
     def on_part(self, connection, event):
         self.print_info(f"Part: target={event.target} source={event.source}")
@@ -319,6 +366,11 @@ class App(Gtk.Application):
         if nick in self.channel_users[channel]:
             self.channel_users[channel].remove(nick)
             self.update_users()
+
+        if nick != self.nickname:
+            message = Message(nick, None, "quit")
+            self.messages.append(message)
+            self.render_html()
 
     @idle
     def on_all_raw_messages(self, connection, event):
@@ -368,51 +420,122 @@ class App(Gtk.Application):
 # UI IRC functions
 ##################
 
+    def render_if_current(self):
+        script = """
+            ({
+                page_height:      document.body.scrollHeight,
+                current_position: document.body.scrollTop,
+                viewport_height:  window.innerHeight
+            });
+        """
+        self.webview.evaluate_javascript(script, -1, None, None, None, self.on_position_query_finished)
+
+    def on_position_query_finished(self, webview, result, user_data=None):
+        jscvalue = webview.evaluate_javascript_finish(result)
+        if jscvalue is not None and jscvalue.is_object():
+            page_height = jscvalue.object_get_property("page_height").to_double()
+            current_position = jscvalue.object_get_property("current_position").to_double()
+            viewport_height = jscvalue.object_get_property("viewport_height").to_double()
+
+            if current_position + viewport_height >= page_height - 10:
+                self.scrollback_return_button.hide()
+                self.scrollback_queue_start_count = 0
+                self._real_render_html()
+            else:
+                if self.scrollback_queue_start_count == 0 and self.messages[-1].action is None:
+                    self.scrollback_queue_start_count = self.n_real_messages - 1
+
+                    if self.separator_message is not None:
+                        self.messages.remove(self.separator_message)
+
+                    message = Message(None, None, separator=True)
+                     # We're already handling a message (which was already appended),
+                     # place this before it.
+                    self.messages.insert(-1, message)
+                    self.separator_message = message
+
+                queued_count = self.n_real_messages - self.scrollback_queue_start_count
+                if queued_count > 0:
+                    self.scrollback_return_button.show()
+                    button_text = gettext.ngettext(_("%d new message"), _("%d new messages"), queued_count) % (queued_count)
+                    self.scrollback_return_button.set_label(button_text)
+
     def render_html(self):
+        self.render_if_current()
+
+    def _real_render_html(self):
         messages_section = "<div>"
         last_nick = ""
+        last_message_time = None
+        minutes_since_previous_message = 0
         for message in self.messages:
+            if last_message_time is not None:
+                minutes_since_previous_message = get_span_minutes(message.time, last_message_time)
+            last_message_time = message.time
+            date = format_timespan(message.time, self.settings.get_boolean("timestamp-24h"))
             mine = ""
             response = ""
             nickname = message.nick
-            letter = nickname[0].upper()
-            color = self.user_colors[nickname]
-            text = message.text
-            words = text.lower().split(" ")
-            if text.startswith("\x01ACTION") and text.endswith("\x01"):
-                text = text.replace("\x01ACTION", "").replace("\x01", "")
-                text = f"<i><-- {text}</i>"
-            if message.nick == self.nickname:
-                mine = "mine"
-            elif self.nickname.lower() in words or (self.nickname+":").lower() in words or ("@"+self.nickname).lower() in words:
-                response = "response"
-            if message.nick == last_nick:
+
+            if message.text is not None:
+                text = message.text
+                words = text.lower().split(" ")
+                if text.startswith("\x01ACTION") and text.endswith("\x01"):
+                    text = text.replace("\x01ACTION", "").replace("\x01", "")
+                    text = f"<i><-- {text}</i>"
+                if message.nick == self.nickname:
+                    mine = "mine"
+                elif self.nickname.lower() in words or (self.nickname+":").lower() in words or ("@"+self.nickname).lower() in words:
+                    response = "response"
+
+            if message.action is not None:
+                if message.action == "join":
+                    action_message = _(f"{nickname} joined the channel")
+                elif message.action == "quit":
+                    action_message = _(f"{nickname} left the channel")
+                elif message.action == "nick":
+                    action_message = _(f"{message.old_nick} is now {nickname}")
+
+                messages_section += f"""
+                    <div class="action">
+                        <div class="action-text">{action_message}</div>
+                    </div>
+                """
+            elif message.separator:
+                messages_section += f"""
+                    <hr class="solid">
+                """
+            elif message.nick == last_nick and minutes_since_previous_message < 5:
                 messages_section += f"""
                         <div class="line {response}">{text}</div>
                     """
             else:
+                letter = nickname[0].upper()
+                color = self.user_colors[nickname]
                 messages_section += f"""
                     </div>
                     <div class="messages {mine}">
                         <span class="avatar"><span style="background-color:{color}">{letter}</span></span>
-                        <div class="nick">{nickname}<span class="date"></span></div>
+                        <div class="nick">{nickname}<span class="date">{date}</span></div>
                         <div class="line {response}">{text}</div>
                     """
-            last_nick = message.nick
+            # ignore parts/joins with respect to chat continuity
+            if message.action is None and not message.separator:
+                last_nick = message.nick
 
         html = f"""
-<html>
-<head>
-    <link rel="stylesheet" type="text/css" href="webview.css">
-</head>
-<body>
-    {messages_section}
-    </div>
-    <script>
-        window.scrollTo(0, document.body.scrollHeight);
-    </script>
-</body>
-</html>
+            <html>
+            <head>
+                <link rel="stylesheet" type="text/css" href="webview.css">
+            </head>
+            <body>
+                {messages_section}
+                </div>
+                <script>
+                    window.scrollTo(0, document.body.scrollHeight);
+                </script>
+            </body>
+            </html>
         """
 
         self.webview.load_html(html, "file:///usr/share/jargonaut/")
@@ -439,6 +562,7 @@ class App(Gtk.Application):
 
         _message = Message(nick, text)
         self.messages.append(_message)
+        self.n_real_messages += 1
         self.render_html()
         self.last_message_nick = nick
 
@@ -483,6 +607,11 @@ class App(Gtk.Application):
             return True
         return False
 
+    def on_scrollback_return_button_clicked(self, widget):
+        self.scrollback_return_button.hide()
+        self.scrollback_queue_start_count = 0
+        self._real_render_html()
+
     def close_window(self, window, event):
         window.hide()
         return True
@@ -515,11 +644,12 @@ class App(Gtk.Application):
     def on_back_button_clicked(self, widget):
         self.builder.get_object("main_stack").set_visible_child_name("page_chat")
         self.builder.get_object("back_button").set_visible(False)
+        self.entry.grab_focus()
 
     def on_users_button_clicked(self, widget):
-        visible = self.user_treeview.get_visible()
+        visible = self.user_list_box.get_visible()
         self.settings.set_boolean("user-list-visible", not visible)
-        self.user_treeview.set_visible(not visible)
+        self.user_list_box.set_visible(not visible)
 
     def on_tray_activated(self, icon, button, time):
         if button == Gdk.BUTTON_PRIMARY:
@@ -530,9 +660,28 @@ class App(Gtk.Application):
                 self.window.show()
                 self.window.present_with_time(time)
 
+    def update_hw_acceleration(self, active):
+        settings = self.webview.get_settings()
+        if active:
+            policy = WebKit2.HardwareAccelerationPolicy.ALWAYS
+        else:
+            policy = WebKit2.HardwareAccelerationPolicy.NEVER
+        settings.set_hardware_acceleration_policy(policy)
+        self.show_restart_infobar()
+
     @idle
     def update_dark_mode(self, active):
         Gtk.Settings.get_default().set_property("gtk-application-prefer-dark-theme", active)
+
+    def update_timestamp_format(self, active):
+        self.render_html()
+
+    def show_restart_infobar(self, *args, **kargs):
+        # avoid showing the info bar during init
+        if self.main_stack.get_visible_child_name() != "page_settings":
+            return
+
+        self.builder.get_object("prefs_restart_infobar").show()
 
     def on_key_press_event(self, widget, event):
         keyname = Gdk.keyval_name(event.keyval)
@@ -607,11 +756,12 @@ class App(Gtk.Application):
 
     def do_startup(self):
         Gtk.Application.do_startup(self)
-        self.connect("shutdown", self.on_shutdown)
 
-    def on_shutdown(self, application):
+    def do_shutdown(self):
         if self.is_connected:
             self.disconnect()
+
+        Gtk.Application.do_shutdown(self)
 
 app = App()
 app.run()

@@ -3,6 +3,7 @@ gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, GLib
 import gettext
 import locale
+import math
 import threading
 
 # i18n
@@ -127,3 +128,26 @@ def open_keyboard_shortcuts(widget):
         window = builder.get_object("shortcuts")
         window.set_title(_("Chat Room"))
         window.show()
+
+def get_span_minutes(message_dt, previous_dt):
+    span = message_dt.difference(previous_dt)
+    return math.floor(span / GLib.TIME_SPAN_MINUTE)
+
+def format_timespan(message_dt, use_24h):
+    now = GLib.DateTime.new_now_local()
+    y, m, d = now.get_ymd()
+
+    this_past_midnight_dt = GLib.DateTime.new_local(y, m, d, 0, 0, 0)
+    before_today = this_past_midnight_dt.difference(message_dt) > 0
+
+    formatted = None
+
+    if use_24h:
+        formatted = message_dt.format("%-H:%M")
+    else:
+        formatted = message_dt.format("%-I:%M %p")
+
+    if before_today:
+        formatted += " %x"
+
+    return formatted

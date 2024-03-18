@@ -20,7 +20,7 @@
       <default>""</default>
     </key>
     <key name="prefer-dark-mode" type="b">
-      <default>true</default>
+      <default>false</default>
     </key>
     <key name="user-list-visible" type="b">
       <default>true</default>
@@ -28,6 +28,13 @@
     <key name="debug" type="b">
       <default>false</default>
       <summary>Whether to print debug information to stdout</summary>
+    </key>
+    <key name="hw-acceleration" type="b">
+      <default>false</default>
+      <summary>WebKit2 HW Acceleration</summary>
+    </key>
+    <key name="timestamp-24h" type="b">
+      <default>true</default>
     </key>
   </schema>
 </schemalist>
