@@ -10,12 +10,7 @@ Under the hood it uses IRC, though it makes no difference from a user point of v
 
 ## ALPHA
 
-- Add timestamps
 - Connect to multiple channels
-- show nick changes
-- show people who left if user interacted with them or if they spoke recently
-- Fix user list for large channels
-- UI: Let user show/hide side panes
 - support mono tags
 
 ## Integration
@@ -25,6 +20,7 @@ Under the hood it uses IRC, though it makes no difference from a user point of v
 - Document the project scope (this isn't meant to be a full IRC client)
 - decouple default settings from mint values
 - raise awareness that anything prior join isn't seen (i.e. noobs get the impression the room is dead), assistant
+- notifications shouldn't be HTML escaped
 
 # Security / Privacy / Moderation
 
