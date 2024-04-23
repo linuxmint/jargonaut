@@ -1,3 +1,33 @@
+jargonaut (1.1.0) wilma; urgency=medium
+
+  [ Clement Lefebvre ]
+  * New layout
+  * Fix calls to print_info
+  * identification: Add more info to print_info
+
+  [ Michael Webster ]
+  * Layout improvements
+  * Add timestamps
+  * Report parts, joins, nick-changes.
+  * Add github workflow.
+
+  [ Clement Lefebvre ]
+  * Simplify user list
+  * Set the spell checker language to en_US
+  * Make HW Acceleration configurable
+  * Remove leftover code
+  * Prefer light mode by default
+
+  [ Michael Webster ]
+  * Freeze message rendering while in scrollback.
+  * Add 24h clock preference, restrict infobar to specific prefs.
+
+  [ Clement Lefebvre ]
+  * Fix typo
+  * Update README
+
+ -- Clement Lefebvre <root@linuxmint.com>  Tue, 23 Apr 2024 10:28:27 +0100
+
 jargonaut (1.0.9) virginia; urgency=medium
 
   * Fix notifications
