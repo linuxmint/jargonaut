@@ -541,9 +541,9 @@ class App(Gtk.Application):
         self.webview.load_html(html, "file:///usr/share/jargonaut/")
 
     @idle
-    def print_message(self, nick, text):
+    def print_message(self, nick, message):
         # Escape any tags, i.e. show exactly what people typed, don't let Webkit interpret it.
-        text = html.escape(text)
+        text = html.escape(message)
         # Format text (IRC codes -> pango/HTML)
         text = re.sub(r'\x02(.*?)\x02', r'<b>\1</b>', text)
         text = re.sub(r'\x16(.*?)\x16', r'<i>\1</i>', text)
@@ -560,8 +560,8 @@ class App(Gtk.Application):
                 return f'<a href="{url}">{url}</a>'
         text = re.sub(url_pattern, repl, text)
 
-        message = Message(nick, text)
-        self.messages.append(message)
+        _message = Message(nick, text)
+        self.messages.append(_message)
         self.n_real_messages += 1
         self.render_html()
         self.last_message_nick = nick
@@ -570,8 +570,8 @@ class App(Gtk.Application):
         if self.nickname.lower() in words or (self.nickname+":").lower() in words or ("@"+self.nickname).lower() in words:
             if not self.is_window_focused():
                 self.tray.set_icon_name("jargonaut-status-msg-symbolic")
-                title = _("Message from %s") % message.nick
-                self.send_notification(title, text)
+                title = _("Message from %s") % _message.nick
+                self.send_notification(title, message)
 
     @idle
     def update_users(self):
