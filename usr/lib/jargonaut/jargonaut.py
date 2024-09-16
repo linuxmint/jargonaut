@@ -65,6 +65,7 @@ class App(Gtk.Application):
         self.server = self.settings.get_string("server")
         self.port = self.settings.get_int("port")
         self.tls = self.settings.get_boolean("tls-connection")
+        self.show_thumbs = self.settings.get_boolean("show-thumbs")
         self.nickname = self.get_new_nickname()
 
         self.channel_users = {}
@@ -133,6 +134,7 @@ class App(Gtk.Application):
         bind_entry_widget(self.builder.get_object("pref_nickname"), self.settings, "nickname", fn_callback=self.show_restart_infobar)
         bind_entry_widget(self.builder.get_object("pref_password"), self.settings, "password", fn_callback=self.show_restart_infobar),
         bind_switch_widget(self.builder.get_object("pref_acceleration"), self.settings, "hw-acceleration", fn_callback=self.update_hw_acceleration)
+        bind_switch_widget(self.builder.get_object("show_thumbs"), self.settings, "show-thumbs", fn_callback=self.update_show_thumbs)
 
         self.webview = WebKit2.WebView()
         self.update_hw_acceleration(self.settings.get_boolean("hw-acceleration"))
@@ -540,6 +542,12 @@ class App(Gtk.Application):
 
         self.webview.load_html(html, "file:///usr/share/jargonaut/")
 
+    def is_image_url(self,url):
+        image = url.split('/')[-1]
+        image = image.split('?')[0]
+        if image.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.svg', '.bmp', '.webp')):
+            return True
+
     @idle
     def print_message(self, nick, text):
         # Escape any tags, i.e. show exactly what people typed, don't let Webkit interpret it.
@@ -554,7 +562,7 @@ class App(Gtk.Application):
         url_pattern = r'((http[s]?://[^\s]{3,}\.[^\s]{2,}))'
         def repl(match):
             url = match.group(1)
-            if url.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.svg', '.bmp', '.webp')):
+            if self.is_image_url(url) and self.show_thumbs:
                 return f'<a href="{url}"><img class="thumb" src="{url}" title="{url}"/></a>'
             else:
                 return f'<a href="{url}">{url}</a>'
@@ -668,6 +676,9 @@ class App(Gtk.Application):
             policy = WebKit2.HardwareAccelerationPolicy.NEVER
         settings.set_hardware_acceleration_policy(policy)
         self.show_restart_infobar()
+
+    def update_show_thumbs(self, active):
+            self.show_thumbs = True if active else False
 
     @idle
     def update_dark_mode(self, active):
