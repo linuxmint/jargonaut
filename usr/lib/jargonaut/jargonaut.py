@@ -107,7 +107,7 @@ class App(Gtk.Application):
 
         # Tray
         menu = Gtk.Menu()
-        image = Gtk.Image.new_from_icon_name("application-exit-symbolic", Gtk.IconSize.MENU)
+        image = Gtk.Image.new_from_icon_name("xapp-exit-symbolic", Gtk.IconSize.MENU)
         menuItem = Gtk.ImageMenuItem(label=_("Quit"), image=image)
         menuItem.connect('activate', self.on_tray_quit)
         menu.append(menuItem)
@@ -252,7 +252,7 @@ class App(Gtk.Application):
             self.is_connected = True
             self.client.start()
         except Exception as e:
-            self.show_error_status("dialog-error-symbolic", _("Error"), str(e))
+            self.show_error_status("xapp-dialog-error-symbolic", _("Error"), str(e))
 
     @_async
     def join_channels(self, connection):
@@ -395,18 +395,18 @@ class App(Gtk.Application):
     @idle
     def on_erroneusnickname(self, connection, event):
         self.print_info("Invalid nickname: %s" % event.arguments[0])
-        self.show_error_status("dialog-error-symbolic", _("Invalid nickname"), _("Your nickname was rejected. Restart the application to reset it."))
+        self.show_error_status("xapp-dialog-error-symbolic", _("Invalid nickname"), _("Your nickname was rejected. Restart the application to reset it."))
         self.settings.set_string("nickname", "")
 
     @idle
     def on_disconnect(self, connection, event):
         self.print_info("Disconnected from server: %s" % event.target)
-        self.show_error_status("dialog-error-symbolic", _("Disconnected"), _("You have been disconnected from the server. Please try to reconnect."))
+        self.show_error_status("xapp-dialog-error-symbolic", _("Disconnected"), _("You have been disconnected from the server. Please try to reconnect."))
 
     @idle
     def on_error(self, connection, event):
         self.print_info("Error from server: %s" % event.arguments[0])
-        self.show_error_status("dialog-error-symbolic", _("Error"), _("An error occurred: ") + event.arguments[0])
+        self.show_error_status("xapp-dialog-error-symbolic", _("Error"), _("An error occurred: ") + event.arguments[0])
 
     @idle
     def on_nicknameinuse(self, connection, event):
