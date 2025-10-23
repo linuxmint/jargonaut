@@ -5,7 +5,7 @@
   <object class="GtkImage" id="image1">
     <property name="visible">True</property>
     <property name="can-focus">False</property>
-    <property name="icon-name">xapp-go-previous-symbolic</property>
+    <property name="icon-name">xsi-go-previous-symbolic</property>
   </object>
   <object class="GtkMenu" id="main_menu">
     <property name="visible">True</property>
@@ -40,7 +40,7 @@
                   <object class="GtkImage" id="status_icon">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
-                    <property name="icon-name">xapp-network-server-symbolic</property>
+                    <property name="icon-name">xsi-network-server-symbolic</property>
                     <property name="icon_size">6</property>
                   </object>
                   <packing>
@@ -319,7 +319,7 @@
                                   <object class="GtkImage">
                                     <property name="visible">True</property>
                                     <property name="can-focus">False</property>
-                                    <property name="icon-name">xapp-users-symbolic</property>
+                                    <property name="icon-name">xsi-users-symbolic</property>
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
@@ -685,7 +685,7 @@
               <object class="GtkImage">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
-                <property name="icon-name">xapp-open-menu-symbolic</property>
+                <property name="icon-name">xsi-open-menu-symbolic</property>
               </object>
             </child>
           </object>
