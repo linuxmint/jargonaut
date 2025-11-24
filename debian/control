@@ -4,7 +4,8 @@ Priority: optional
 Maintainer: Linux Mint <root@linuxmint.com>
 Build-Depends:
     debhelper (>= 9),
-    dh-python
+    dh-python,
+    meson
 Standards-Version: 3.9.5
 
 Package: jargonaut
@@ -17,6 +18,7 @@ Depends:
     gir1.2-webkit2-4.1 | gir1.2-webkit2-4.0,
     gir1.2-gspell-1,
     python3-irc,
+    python3-setproctitle,
     ${misc:Depends},
     ${python3:Depends}
 Description: Chat Room application
