@@ -10,4 +10,5 @@ datadir = get_option('datadir')
 podir = meson.source_root() / 'po'
 
 subdir('data')
+subdir('usr')
 subdir('po')
